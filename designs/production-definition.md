@@ -3,10 +3,12 @@
 ## Personas
 1) **Serious Learner** — wants consistent practice, structured goals, prefers matched levels.
 2) **Casual Partner** — wants light conversation practice, flexible schedule.
-3) **Helper/Tutor‑leaning** — enjoys teaching, may prefer advanced learners or specific languages.
+
+> Note: **Usage intent is not a required profile choice at signup**. People can explore serious vs. casual matches after registration.
+> **Helper/Tutor** intent is out of scope for V1; consider it as a future profile attribute.
 
 ## Top 3 user journeys
-A) **Onboarding → Profile → Language goals → Availability → Match preferences → Start searching**
+A) **Onboarding → Profile → Language goals → Availability → (Optional preferences) → Start searching**
 B) **Discover/match → Browse candidates → Send request → Accept → Open chat**
 C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 
