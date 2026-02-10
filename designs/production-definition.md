@@ -18,8 +18,7 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 - Search/match: filter by language pair, level, availability overlap
 - Match request + accept/decline
 - Basic 1:1 messaging (text)
-- Safety: report/block + basic moderation queue
-- Simple admin view for reports (minimal OK)
+- Minimal admin view/dashboard (non‑reporting)
 
 ## Explicitly out‑of‑scope (V1)
 - Payments or premium tiers
@@ -27,6 +26,7 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 - Group lessons or communities
 - AI tutor features
 - Full scheduling/Calendar sync
+- Reporting/abuse workflows (no report in V1)
 
 ## Happy path (ASCII flow)
 ```
@@ -44,13 +44,21 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 ## Additional confirmed requirements
 - **Day‑1 multi‑language support** for all UI and user‑facing API messages (user‑selected language).
 - **Profile minimums**:
-  - Email
+  - Email (read‑only after signup)
   - Unique user handle (letters/numbers only, case‑insensitive; stored with `@` prefix, e.g., `@arturo`)
   - Languages list with levels; **at least one native language** required on registration
+- **Profile edit rules**:
+  - Email is read‑only after signup
+  - Handle is editable **only if unused** (before anyone else interacts with it)
+  - Other fields editable as long as the user still has **at least one native language**
 - **Additional profile fields**:
   - Birth year + month only (no date); compute age on the fly when needed
   - Store **country code**, display country name via standard mapping
   - **Avoid gender**
+- **Messaging limits (anti‑spam)**:
+  - Limit pre‑accept messages (N messages)
+  - Daily message cap per user
+  - Make both configurable
 
 ## Search filters (V1)
 - Age (derived from birth year/month)
@@ -62,6 +70,4 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 - Branch naming: `feature/<short>` and `fix/<short>`
 
 ## Open questions (for later phases)
-- Clarify “reports” taxonomy (e.g., user safety, abuse, content) and notification strategy.
-- Minimum required profile fields beyond the confirmed set.
 - Any hard filters beyond age/country to include or avoid.
