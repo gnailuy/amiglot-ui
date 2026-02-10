@@ -49,8 +49,9 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
   - Languages list with levels; **at least one native language** required on registration
 - **Profile edit rules**:
   - Email is read‑only after signup
-  - Handle is editable **only if unused by others** (i.e., no other users have seen/used it in interactions yet)
-  - Internal fixed user ID is used for interactions; `@username` is a display label
+  - Users can have only **one handle at a time**; handle changes must pick a handle **not currently in use by another user**
+  - If a user changes handles, their old handle becomes available for others
+  - Internal fixed user ID is used for interactions; `@username` is just the display label
   - Other fields editable as long as the user still has **at least one native language**
 - **Additional profile fields**:
   - Birth year + month only (no date); compute age on the fly when needed
