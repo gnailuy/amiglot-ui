@@ -28,17 +28,16 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 - Full scheduling/Calendar sync
 - Reporting/abuse workflows (no report in V1)
 
-## Happy path (ASCII flow)
-```
-[Sign up]
-   |
-[Create Profile] -> [Set Goals + Availability]
-   |
-[Search/Match] -> [View Candidate]
-   |
-[Send Request] -> [Accepted]
-   |
-[Chat + Plan Session]
+## Happy path (Mermaid)
+```mermaid
+flowchart TD
+  A[Sign up] --> B[Create Profile]
+  B --> C[Set Goals + Availability]
+  C --> D[Search/Match]
+  D --> E[View Candidate]
+  E --> F[Send Request]
+  F --> G[Accepted]
+  G --> H[Chat + Plan Session]
 ```
 
 ## Additional confirmed requirements
@@ -66,10 +65,6 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 - Age (derived from birth year/month)
 - Country (stored as country code)
 - Avoid gender
-
-## Gitflow note
-- PRs required by default; target branch: `main`
-- Branch naming: `feature/<short>` and `fix/<short>`
 
 ## Open questions (for later phases)
 - Any hard filters beyond age/country to include or avoid.
