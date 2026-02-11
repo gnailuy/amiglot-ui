@@ -49,7 +49,11 @@ From `amiglot-api` migrations:
 > Note: profile, match, and messaging endpoints and JSON contracts are TBD; they should align with the V1 must‑have flows described in the production definition.
 
 ## 5. Acceptance Criteria (Definition of Done)
-- Production definition is indexed and renamed to `001-production-definition.md`.
-- A brief production specification exists in `designs/002-production-specification.md` with the sections above.
-- Spec aligns with confirmed V1 requirements, constraints, and API stack decisions.
-- No breaking changes to app code; documentation‑only change.
+- Users can sign up via magic link, create a profile, and set native/target languages + levels.
+- Profile validation enforces: unique handle (letters/numbers only, case‑insensitive, stored with `@`), at least one native language, and editable fields except email.
+- Users can search/filter candidates by language pair, level, availability overlap, age (derived), and country.
+- Users can send a match request, the other user can accept, and both can start a 1:1 text chat.
+- All UI and user‑facing API messages support multi‑language from day one.
+- API/DB support the above flows (profile, match, messaging tables + endpoints), and `GET /healthz` returns `{ "ok": true }`.
+- A minimal admin view exists to monitor usage (no reporting/abuse workflows in V1).
+- CI passes (lint/typecheck/build/tests where applicable).
