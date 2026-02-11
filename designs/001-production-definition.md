@@ -20,6 +20,21 @@ C) **Chat → Schedule practice → Keep notes → Continue/adjust**
 - Basic 1:1 messaging (text)
 - Minimal admin view/dashboard (non‑reporting)
 
+## Matching strategy (V1)
+### Core language buckets
+- **Teachable (`L_teach`)**: languages the user is **Native** or **Fluent** in.
+- **Learnable (`L_target`)**: languages the user **explicitly selected to practice**.
+- **Bridgeable (`L_bridge`)**: **any** language where the user is **Intermediate or higher** (capable of basic communication).
+
+### The “Golden Rule”
+A valid match exists **only if both conditions are true**:
+1) **Mutual Exchange (Why)** — A wants to learn a language B can teach **and** B wants to learn a language A can teach. (Double coincidence of wants.)
+2) **The Bridge (How)** — A and B share **at least one** common language where **both** have proficiency **≥ Basic/Conversational**.
+
+> Notes
+> - V1 is **mutual-only** (no one‑sided “just chat” matches).
+> - Multi‑user/group matching is out of scope for V1.
+
 ## Explicitly out‑of‑scope (V1)
 - Payments or premium tiers
 - Video/voice calls
