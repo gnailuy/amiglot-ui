@@ -1,59 +1,117 @@
-# Amiglot — Production Specification (Brief)
+# Amiglot — Production Specification (User Stories & Paths)
 
-## 1. Objective
-Build Amiglot: a reliable, multilingual platform that helps language learners find compatible partners and move from profile creation to chat quickly and safely. V1 focuses on onboarding, matching, and basic 1:1 messaging with clear anti‑spam limits and a clean admin view.
+## 1. User Stories (Detailed)
+### Onboarding & Profile
+- As a new learner, I can sign up via a magic link so I can get into the product without passwords.
+- As a new learner, I can create a profile with a unique handle, birth year + month, country, and languages so I can be discoverable by partners.
+- As a learner, I must set at least one native language so my profile can be created; additional languages and levels can be added later.
+- As a learner with only one native language set, I cannot search for others or be discoverable until more language data is added.
+- As a learner, I can edit my profile fields (except email) to keep my info current.
+- As a learner, I can manage my availability (days/time blocks + timezone) so the system can surface good overlaps.
 
-## 2. User Stories
-- As a new learner, I can sign up via magic link, create a profile, and set my native/target languages and levels so I can find relevant partners.
-- As a learner, I can search and filter candidates by language pair, level, availability overlap, age (derived), and country.
-- As a learner, I can send a match request and, once accepted, start a 1:1 text chat.
-- As a learner, I can edit my profile (except email) and keep at least one native language to remain visible.
-- As an admin, I can view a minimal dashboard to monitor usage (no reporting/abuse workflows in V1).
+### Discovery & Matching
+- Matching criteria and profile language model are TBD and will be refined before implementation.
+- As a learner, I can search and filter candidates by language pair, level, availability overlap, age (derived), and country so I can find compatible partners.
+- As a learner, I can view a candidate profile and send a match request with a short intro note.
+- As a learner, I can accept or decline incoming match requests so I control who can chat with me.
+- As a learner, I can see match request status (pending/accepted/declined) so I know what to expect.
 
-## 3. Technical Constraints
-**Frontend (UI)**
-- Next.js 16.1.6, React 19.2.3, TypeScript 5.x
-- ESLint + Prettier, strict lint/typecheck/build in CI
+### Chat
+- As a matched learner, I can start a 1:1 text chat so I can practice with my partner.
+- As a learner, I can see message delivery timestamps so I can track the conversation.
+- As a learner, I can end a chat (unmatch) to stop further messaging.
 
-**Backend (API)**
-- Go 1.24
-- Huma (HTTP framework)
-- PostgreSQL with pgx + sqlc, migrations via goose
-- API port: 6174
+### Safety & Compliance
+- As a learner, I can report or block another user to protect my experience (workflow may be minimal in V1).
+- As an admin, I can view a minimal dashboard (new users, matches, and message counts) to monitor usage.
 
-**Product constraints**
-- Day‑1 multi‑language support for all UI and user‑facing API messages.
-- V1 auth via magic link (dev mode: local link generation when `ENV=dev`).
-- Profile: unique handle (letters/numbers only), stored as `@handle`, case‑insensitive.
-- Avoid gender; store birth year + month only, derive age on the fly.
+## 2. User Action Paths
+### 2.1 Sign up → Profile → Visible in Discovery
+**Path**
+1. User enters email → requests magic link.
+2. User clicks magic link → authenticated session created.
+3. User completes profile (handle, native language, country, birth year/month, availability; target languages/levels may be added later).
+4. System validates profile and sets status to “discoverable” only if minimum language data is sufficient.
+5. User appears in search results when discoverable.
 
-## 4. Data Contract
-### Database Schema (current)
-From `amiglot-api` migrations:
-
-**users**
-- `id` UUID PRIMARY KEY
-- `email` TEXT UNIQUE NOT NULL
-- `created_at` TIMESTAMPTZ NOT NULL DEFAULT now()
-
-> Note: additional profile, match, and messaging tables are TBD and will be added in subsequent migrations.
-
-### API JSON Shapes (current)
-**GET /healthz**
-```json
-{
-  "ok": true
-}
+**Mermaid**
+```mermaid
+flowchart TD
+  A[Enter email] --> B[Send magic link]
+  B --> C[Click magic link]
+  C --> D[Authenticated session]
+  D --> E[Complete profile]
+  E --> F{Profile valid?}
+  F -- No --> E
+  F -- Yes --> G[Set discoverable]
+  G --> H[Visible in search]
 ```
 
-> Note: profile, match, and messaging endpoints and JSON contracts are TBD; they should align with the V1 must‑have flows described in the production definition.
+### 2.2 Search → View Profile → Send Match Request
+**Path**
+1. User opens Search.
+2. User sets filters (language pair, level, availability overlap, age, country).
+3. System returns candidates.
+4. User opens a candidate profile.
+5. User sends match request with intro note.
+6. System creates “pending” request.
 
-## 5. Acceptance Criteria (Definition of Done)
-- Users can sign up via magic link, create a profile, and set native/target languages + levels.
-- Profile validation enforces: unique handle (letters/numbers only, case‑insensitive, stored with `@`), at least one native language, and editable fields except email.
-- Users can search/filter candidates by language pair, level, availability overlap, age (derived), and country.
-- Users can send a match request, the other user can accept, and both can start a 1:1 text chat.
-- All UI and user‑facing API messages support multi‑language from day one.
-- API/DB support the above flows (profile, match, messaging tables + endpoints), and `GET /healthz` returns `{ "ok": true }`.
-- A minimal admin view exists to monitor usage (no reporting/abuse workflows in V1).
-- CI passes (lint/typecheck/build/tests where applicable).
+**Mermaid**
+```mermaid
+flowchart TD
+  A[Open search] --> B[Set filters]
+  B --> C[Results list]
+  C --> D[View candidate profile]
+  D --> E[Send match request]
+  E --> F[Request status: pending]
+```
+
+### 2.3 Incoming Request → Accept → Start Chat
+**Path**
+1. User receives notification of a match request.
+2. User opens request and reads intro.
+3. User accepts request.
+4. System creates a match and opens chat thread.
+5. Both users can send messages.
+
+**Mermaid**
+```mermaid
+flowchart TD
+  A[Incoming request] --> B[Open request]
+  B --> C{Accept?}
+  C -- Decline --> D[Request declined]
+  C -- Accept --> E[Create match]
+  E --> F[Open chat]
+  F --> G[Send messages]
+```
+
+### 2.4 Edit Profile → Keep Discoverable
+**Path**
+1. User opens profile settings.
+2. User edits profile fields (not email).
+3. System validates changes (handle uniqueness, at least one native language).
+4. Profile remains discoverable.
+
+**Mermaid**
+```mermaid
+flowchart TD
+  A[Open profile settings] --> B[Edit profile fields]
+  B --> C{Valid?}
+  C -- No --> B
+  C -- Yes --> D[Save changes]
+  D --> E[Remain discoverable]
+```
+
+### 2.5 Unmatch → Close Chat
+**Path**
+1. User opens a chat.
+2. User selects “Unmatch”.
+3. System closes the thread and prevents further messages.
+
+**Mermaid**
+```mermaid
+flowchart TD
+  A[Open chat] --> B[Unmatch]
+  B --> C[Close thread]
+  C --> D[Messaging disabled]
+```
