@@ -10,26 +10,28 @@
 - As a learner, I can manage my availability (days/time blocks + timezone) so the system can surface good overlaps.
 
 ### Discovery & Matching
-- As a learner, I can define **teachable**, **target**, and **bridge** languages via my proficiency levels and practice selections so the system can determine match eligibility.
+- As a learner, I can add languages with a proficiency level (and an optional short description) so others understand my ability.
 - As a learner, I can only be matched when there is a **mutual exchange**: each person wants to learn a language the other can teach.
-- As a learner, I can only be matched when there is at least **one shared bridge language** (both users ≥ Basic/Conversational) so we can coordinate.
+- As a learner, I can only be matched when there is at least **one shared bridge language** (both users ≥ Intermediate) so we can coordinate.
 - As a learner, I can search and filter candidates by language pair, level, availability overlap, age (derived), and country so I can find compatible partners.
 - As a learner, I can view a candidate profile and send a match request with a short intro note.
 - As a learner, I can accept or decline incoming match requests so I control who can chat with me.
 - As a learner, I can see match request status (pending/accepted/declined) so I know what to expect.
 
 ### Matching Rules (V1)
-**Language buckets**
-- **Teachable (`L_teach`)**: Native or Fluent
+**Internal buckets (derived from levels)**
+- **Teachable (`L_teach`)**: level ≥ 4 (Advanced/Native)
 - **Learnable (`L_target`)**: explicitly selected to practice
-- **Bridgeable (`L_bridge`)**: Intermediate or higher
+- **Bridgeable (`L_bridge`)**: level ≥ 3 (Intermediate)
 
-**Golden Rule: a valid match exists iff**
-1) **Mutual Exchange** — A wants a language in `B.L_teach` **and** B wants a language in `A.L_teach`.
-2) **Bridge Language** — `A.L_bridge ∩ B.L_bridge` is not empty (both ≥ Basic/Conversational).
+**Checks (all must pass)**
+1) **Supply check** — User B has a language User A wants at **level ≥ 4**.
+2) **Demand check** — User A has a language User B wants at **level ≥ 4**.
+3) **Bridge check** — Users share at least one common language where **both** are **level ≥ 3**.
 
 **Scope notes**
 - V1 is mutual‑only (no one‑sided “just chat” matches).
+- For now, we only allow **strong matches** (strict supply/demand thresholds). We may relax these thresholds later.
 - Group matching and multi‑party exchanges are out of scope for V1.
 
 ### Chat
