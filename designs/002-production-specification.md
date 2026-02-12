@@ -139,3 +139,6 @@ flowchart TD
   B --> C[Close thread]
   C --> D[Messaging disabled]
 ```
+
+## Database schema
+- The V1 database schema is defined in `003-technical-specification.md`.

@@ -100,5 +100,8 @@ flowchart TD
 - Country (stored as country code)
 - Avoid gender
 
+## Database schema
+- The V1 database schema is defined in `003-technical-specification.md`.
+
 ## Open questions (for later phases)
 - Any hard filters beyond age/country to include or avoid.
