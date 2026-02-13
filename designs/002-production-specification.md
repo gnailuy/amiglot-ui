@@ -11,9 +11,8 @@
 
 **Availability definition**
 - Users select availability in their **local timezone** (days/time blocks).
-- System **stores availability in UTC** for matching.
-- If a user does not set availability, the system **derives a default** based on their timezone and stores it in UTC.
-
+- System stores **local time + timezone** per slot; matching converts to UTC for specific dates at query time (DST-safe).
+- If a user does not set availability, the UI can **suggest a default** for their timezone, but nothing is stored until the user saves.
 
 ### Discovery & Matching
 - As a learner, I can add languages with a proficiency level (and an optional short description) so others understand my ability.
@@ -139,3 +138,4 @@ flowchart TD
   B --> C[Close thread]
   C --> D[Messaging disabled]
 ```
+
