@@ -191,12 +191,13 @@ Response:
   "next_cursor": "..."
 }
 ```
+Note: `availability_summary` is derived by the API from availability slots (for UI display convenience).
 
 **POST /match-requests**
 Create a request.
 Request:
 ```json
-{ "recipient_id": "uuid", "intro_message": "Hi!" }
+{ "recipient_id": "uuid", "initial_message": "Hi!" }
 ```
 Response:
 ```json
@@ -207,10 +208,29 @@ Response:
 List incoming/outgoing with status.
 Response:
 ```json
-{ "items": [ { "id": "uuid", "requester_id": "uuid", "recipient_id": "uuid", "status": "pending", "intro_message": "Hi" } ], "next_cursor": null }
+{ "items": [ { "id": "uuid", "requester_id": "uuid", "recipient_id": "uuid", "status": "pending", "message_count": 3, "last_message_at": "..." } ], "next_cursor": null }
+```
+
+**GET /match-requests/{id}/messages?cursor=...&limit=...**
+List pre-accept messages between the two users.
+Response:
+```json
+{ "items": [ { "id": "uuid", "sender_id": "uuid", "body": "...", "created_at": "..." } ], "next_cursor": null }
+```
+
+**POST /match-requests/{id}/messages**
+Send a pre-accept message. Enforced per-user limit (configurable, e.g. `pre_match_message_limit`).
+Request:
+```json
+{ "body": "Hello" }
+```
+Response:
+```json
+{ "id": "uuid", "created_at": "..." }
 ```
 
 **POST /match-requests/{id}/accept**
+Accepts the request and **copies pre-accept messages into the new match** in order.
 Response:
 ```json
 { "ok": true, "match_id": "uuid" }
