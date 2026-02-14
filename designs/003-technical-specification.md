@@ -191,7 +191,7 @@ Response:
   "next_cursor": "..."
 }
 ```
-Note: `availability_summary` is derived by the API from availability slots (for UI display convenience).
+Note: `availability_summary` is derived by the API from the user's availability slots (for UI display convenience). The API groups weekly slots into a small set of human‑readable labels (e.g., Weeknights, Weekends, Mornings/Afternoons/Evenings) based on which weekday + time buckets the user has availability in. It is not stored; it is computed on read.
 
 **POST /match-requests**
 Create a request.
@@ -230,7 +230,7 @@ Response:
 ```
 
 **POST /match-requests/{id}/accept**
-Accepts the request and **copies pre-accept messages into the new match** in order.
+Accepts the request and **re-associates the existing pre-accept messages** to the new match (so they appear in `/matches/{id}/messages` without copying).
 Response:
 ```json
 { "ok": true, "match_id": "uuid" }
