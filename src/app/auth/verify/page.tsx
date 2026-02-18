@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { postJson } from "@/lib/api";
@@ -12,7 +12,7 @@ type VerifyResponse = {
   user: { id: string; email: string };
 };
 
-export default function VerifyPage() {
+function VerifyPageContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -57,5 +57,27 @@ export default function VerifyPage() {
         </Link>
       </main>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.page}>
+          <main className={styles.card}>
+            <h1 className={styles.title}>Magic link verification</h1>
+            <p className={styles.message} data-state="loading">
+              Verifying your link...
+            </p>
+            <Link className={styles.secondary} href="/">
+              Go to home
+            </Link>
+          </main>
+        </div>
+      }
+    >
+      <VerifyPageContent />
+    </Suspense>
   );
 }
