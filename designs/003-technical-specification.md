@@ -18,7 +18,7 @@
 This section defines the **UI ↔ API contract** and stays in the UI repo. The API repo focuses on implementation details and refers back here.
 
 ### 2.1 Conventions (shared)
-- **Base URL:** `/api/v1`
+- **Base URL:** `/api/v1` (dev via Caddy: `https://test.gnailuy.com/api/v1`)
 - **Auth:** Magic-link session; authenticated requests carry `Authorization: Bearer <access_token>` (or cookie session if we go cookie-based). The contract allows either; UI should treat `Authorization` as the canonical method.
 - **Localization:** UI sends `Accept-Language`; API returns localized user-facing messages where applicable.
 - **Request IDs:** UI sends `X-Request-Id` (UUID) when available; API echoes `X-Request-Id`.
