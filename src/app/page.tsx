@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { clearAccessToken, getAccessToken } from "@/lib/session";
 
 export default function Home() {
-  const [token, setToken] = useState<string | null>(() => getAccessToken());
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setToken(getAccessToken());
+  }, []);
 
   const onSignOut = () => {
     clearAccessToken();
