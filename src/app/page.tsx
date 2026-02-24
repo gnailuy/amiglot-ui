@@ -10,8 +10,12 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setToken(getAccessToken());
-    setIsMounted(true);
+    const tokenValue = getAccessToken();
+    const frame = requestAnimationFrame(() => {
+      setToken(tokenValue);
+      setIsMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const onSignOut = () => {
