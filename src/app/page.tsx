@@ -7,9 +7,11 @@ import { clearAccessToken, getAccessToken } from "@/lib/session";
 
 export default function Home() {
   const [token, setToken] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setToken(getAccessToken());
+    setIsMounted(true);
   }, []);
 
   const onSignOut = () => {
@@ -24,7 +26,7 @@ export default function Home() {
         <p className={styles.subtitle}>
           Find language partners. Learn together.
         </p>
-        {token ? (
+        {isMounted && token ? (
           <div className={styles.session}>
             <p>You&apos;re signed in.</p>
             <button className={styles.secondary} onClick={onSignOut}>
