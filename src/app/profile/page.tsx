@@ -213,10 +213,14 @@ export default function ProfilePage() {
 
   const countryOptions = useMemo(() => {
     const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
-    const regions =
-      typeof supportedValuesOf === "function"
-        ? supportedValuesOf("region")
-        : DEFAULT_COUNTRY_CODES;
+    let regions = DEFAULT_COUNTRY_CODES;
+    if (typeof supportedValuesOf === "function") {
+      try {
+        regions = supportedValuesOf("region");
+      } catch {
+        regions = DEFAULT_COUNTRY_CODES;
+      }
+    }
     const normalized = regions
       .map((code) => code.toUpperCase())
       .filter((code) => code.length === 2);
@@ -228,10 +232,14 @@ export default function ProfilePage() {
 
   const languageOptions = useMemo(() => {
     const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
-    const languages =
-      typeof supportedValuesOf === "function"
-        ? supportedValuesOf("language")
-        : DEFAULT_LANGUAGE_CODES;
+    let languages = DEFAULT_LANGUAGE_CODES;
+    if (typeof supportedValuesOf === "function") {
+      try {
+        languages = supportedValuesOf("language");
+      } catch {
+        languages = DEFAULT_LANGUAGE_CODES;
+      }
+    }
     const normalized = languages
       .map((code) => code.toLowerCase())
       .filter((code) => code.length >= 2 && code.length <= 3);
@@ -243,10 +251,14 @@ export default function ProfilePage() {
 
   const timezoneOptions = useMemo(() => {
     const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
-    const timezones =
-      typeof supportedValuesOf === "function"
-        ? supportedValuesOf("timeZone")
-        : ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+    let timezones = ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+    if (typeof supportedValuesOf === "function") {
+      try {
+        timezones = supportedValuesOf("timeZone");
+      } catch {
+        timezones = ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+      }
+    }
     return buildTimezoneOptions(timezones);
   }, []);
 
