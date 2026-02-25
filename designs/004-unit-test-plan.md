@@ -29,4 +29,3 @@ Establish a unit testing baseline for the UI repo and outline the priority areas
 - ✅ Test framework installed and configured (Vitest + RTL).
 - ✅ Example test added for API helpers.
 
-No UI unit test notes were present in `designs/003-technical-specification.md` at the time of this plan.
