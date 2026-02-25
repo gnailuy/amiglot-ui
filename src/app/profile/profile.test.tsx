@@ -272,4 +272,102 @@ describe("ProfilePage", () => {
 
     expect(await screen.findByText(/save boom/i)).toBeInTheDocument();
   });
+
+  it("shows handle availability status", async () => {
+    vi.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson
+      .mockResolvedValueOnce({
+        user: { id: "user-1", email: "user@example.com" },
+        profile: {
+          handle: "arturo",
+          birth_year: null,
+          birth_month: null,
+          country_code: null,
+          timezone: "America/Vancouver",
+          discoverable: false,
+        },
+        languages: [
+          {
+            language_code: "en",
+            level: 5,
+            is_native: true,
+            is_target: false,
+            description: "",
+          },
+        ],
+        availability: [
+          {
+            weekday: 1,
+            start_local_time: "18:00",
+            end_local_time: "20:00",
+            timezone: "America/Vancouver",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ available: true });
+
+    render(<ProfilePage />);
+
+    await screen.findByText(/profile setup/i);
+    const handleInput = screen.getByPlaceholderText("arturo");
+    await user.clear(handleInput);
+    await user.type(handleInput, "neo");
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(await screen.findByText(/handle is available/i)).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("updates language and availability inputs", async () => {
+    const user = userEvent.setup();
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson.mockResolvedValueOnce({
+      user: { id: "user-1", email: "user@example.com" },
+      profile: {
+        handle: "arturo",
+        birth_year: null,
+        birth_month: null,
+        country_code: null,
+        timezone: "America/Vancouver",
+        discoverable: false,
+      },
+      languages: [
+        {
+          language_code: "en",
+          level: 5,
+          is_native: true,
+          is_target: false,
+          description: "",
+        },
+      ],
+      availability: [
+        {
+          weekday: 1,
+          start_local_time: "18:00",
+          end_local_time: "20:00",
+          timezone: "America/Vancouver",
+        },
+      ],
+    });
+
+    render(<ProfilePage />);
+    await screen.findByText(/profile setup/i);
+
+    await user.click(screen.getByRole("button", { name: /add language/i }));
+    const selects = screen.getAllByRole("combobox");
+    await user.selectOptions(selects[1], "5");
+    await user.click(screen.getAllByLabelText(/target/i)[1]);
+
+    await user.click(screen.getByRole("button", { name: /add availability slot/i }));
+    const timeInputs = document.querySelectorAll('input[type="time"]') as NodeListOf<HTMLInputElement>;
+    await user.clear(timeInputs[0]);
+    await user.type(timeInputs[0], "19:00");
+    await user.clear(timeInputs[1]);
+    await user.type(timeInputs[1], "21:00");
+  });
+
 });
