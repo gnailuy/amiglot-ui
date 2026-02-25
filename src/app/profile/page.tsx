@@ -211,7 +211,7 @@ export default function ProfilePage() {
       years.push(year);
     }
     return years;
-  }, []);
+  }, [supportedValuesOf]);
 
   const countryOptions = useMemo(() => {
     const regions =
@@ -225,7 +225,7 @@ export default function ProfilePage() {
       normalized.length ? normalized : DEFAULT_COUNTRY_CODES,
       "region",
     );
-  }, []);
+  }, [supportedValuesOf]);
 
   const languageOptions = useMemo(() => {
     const languages =
@@ -239,7 +239,7 @@ export default function ProfilePage() {
       normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
       "language",
     );
-  }, []);
+  }, [supportedValuesOf]);
 
   const timezoneOptions = useMemo(() => {
     const timezones =
