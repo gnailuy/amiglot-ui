@@ -58,7 +58,8 @@ const WEEKDAYS = [
 export default function ProfilePage() {
   const token = useMemo(() => getAccessToken(), []);
   const userId = useMemo(() => getUserId(), []);
-  const [loading, setLoading] = useState(true);
+  const hasAuth = Boolean(token && userId);
+  const [loading, setLoading] = useState(hasAuth);
   const [message, setMessage] = useState<string | null>(null);
 
   const [handle, setHandle] = useState("");
@@ -87,8 +88,7 @@ export default function ProfilePage() {
   ]);
 
   useEffect(() => {
-    if (!token || !userId) {
-      setLoading(false);
+    if (!hasAuth) {
       return;
     }
 
@@ -135,7 +135,7 @@ export default function ProfilePage() {
         );
       })
       .finally(() => setLoading(false));
-  }, [token, userId]);
+  }, [hasAuth, token, userId]);
 
   const onSave = async () => {
     setMessage(null);
