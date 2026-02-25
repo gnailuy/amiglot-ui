@@ -31,7 +31,6 @@
     "jsdom": "^28.1.0",
     "prettier": "^3",
     "typescript": "^5",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.0.18"
   }
 }
