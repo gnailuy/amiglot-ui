@@ -10,7 +10,6 @@ Frontend for Amiglot — find language learning partners.
 ## Prerequisites
 - Node.js 20+
 - An API instance reachable at the same origin under `/api/v1`
-  - Local dev expects a reverse proxy (e.g., Caddy at `https://test.gnailuy.com`) that routes `/api/v1` to the API service.
 
 ## Setup
 
