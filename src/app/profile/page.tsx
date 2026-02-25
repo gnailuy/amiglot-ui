@@ -73,7 +73,7 @@ export default function ProfilePage() {
 
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
-      language_code: "",
+      language_code: "en",
       level: 0,
       is_native: true,
       is_target: false,
@@ -118,7 +118,7 @@ export default function ProfilePage() {
             ? data.languages
             : [
                 {
-                  language_code: "",
+                  language_code: "en",
                   level: 0,
                   is_native: true,
                   is_target: false,
@@ -159,26 +159,57 @@ export default function ProfilePage() {
   const onSave = async () => {
     setMessage(null);
     try {
+      const trimmedHandle = handle.trim();
+      if (!trimmedHandle) {
+        setMessage("Handle is required.");
+        return;
+      }
+
+      const trimmedTimezone = timezone.trim();
+      if (!trimmedTimezone) {
+        setMessage("Timezone is required.");
+        return;
+      }
+
+      const cleanedLanguages = languages.map((lang) => ({
+        ...lang,
+        language_code: lang.language_code.trim(),
+        description: lang.description?.trim() || null,
+      }));
+
+      if (cleanedLanguages.some((lang) => !lang.language_code)) {
+        setMessage("Please fill every language code or remove empty rows.");
+        return;
+      }
+
+      if (cleanedLanguages.length === 0) {
+        setMessage("At least one language is required.");
+        return;
+      }
+
+      const nativeCount = cleanedLanguages.filter((lang) => lang.is_native)
+        .length;
+      if (nativeCount === 0) {
+        setMessage("At least one native language is required.");
+        return;
+      }
+
       await putJson<ProfileResponse>("/profile", {
-        handle,
+        handle: trimmedHandle,
         birth_year: birthYear ? Number(birthYear) : null,
         birth_month: birthMonth ? Number(birthMonth) : null,
         country_code: countryCode || null,
-        timezone,
+        timezone: trimmedTimezone,
       });
 
       await putJson("/profile/languages", {
-        languages: languages.map((lang) => ({
-          ...lang,
-          language_code: lang.language_code.trim(),
-          description: lang.description?.trim() || null,
-        })),
+        languages: cleanedLanguages,
       });
 
       await putJson("/profile/availability", {
         availability: availability.map((slot) => ({
           ...slot,
-          timezone: slot.timezone || timezone,
+          timezone: slot.timezone || trimmedTimezone,
         })),
       });
 
@@ -380,7 +411,7 @@ export default function ProfilePage() {
               setLanguages([
                 ...languages,
                 {
-                  language_code: "",
+                  language_code: "en",
                   level: 0,
                   is_native: false,
                   is_target: false,
