@@ -1,3 +1,5 @@
+import { getAccessToken, getUserId } from "@/lib/session";
+
 export const API_BASE = "/api/v1";
 
 type ApiErrorShape = {
@@ -8,11 +10,7 @@ type ApiErrorShape = {
   };
 };
 
-export async function postJson<T>(
-  path: string,
-  body: Record<string, unknown>,
-  options: { token?: string } = {},
-): Promise<T> {
+function buildHeaders(options: { token?: string } = {}): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "Accept-Language":
@@ -25,12 +23,80 @@ export async function postJson<T>(
     headers["X-Request-Id"] = crypto.randomUUID();
   }
 
-  if (options.token) {
-    headers.Authorization = `Bearer ${options.token}`;
+  const token = options.token ?? getAccessToken() ?? undefined;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
+
+  const userId = getUserId();
+  if (userId) {
+    headers["X-User-Id"] = userId;
+  }
+
+  return headers;
+}
+
+export async function postJson<T>(
+  path: string,
+  body: Record<string, unknown>,
+  options: { token?: string } = {},
+): Promise<T> {
+  const headers = buildHeaders(options);
 
   const response = await fetch(`${API_BASE}${path}`, {
     method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  const data = (await response.json().catch(() => ({}))) as
+    | ApiErrorShape
+    | T;
+
+  if (!response.ok) {
+    const message =
+      (data as ApiErrorShape)?.error?.message ??
+      `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as T;
+}
+
+export async function getJson<T>(
+  path: string,
+  options: { token?: string } = {},
+): Promise<T> {
+  const headers = buildHeaders(options);
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "GET",
+    headers,
+  });
+
+  const data = (await response.json().catch(() => ({}))) as
+    | ApiErrorShape
+    | T;
+
+  if (!response.ok) {
+    const message =
+      (data as ApiErrorShape)?.error?.message ??
+      `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data as T;
+}
+
+export async function putJson<T>(
+  path: string,
+  body: Record<string, unknown>,
+  options: { token?: string } = {},
+): Promise<T> {
+  const headers = buildHeaders(options);
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "PUT",
     headers,
     body: JSON.stringify(body),
   });
