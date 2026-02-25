@@ -165,8 +165,24 @@ export default function ProfilePage() {
   const [email, setEmail] = useState("");
 
   const [handleAvailability, setHandleAvailability] = useState<
-    "idle" | "checking" | "available" | "unavailable" | "invalid"
+    "idle" | "checking" | "available" | "unavailable"
   >("idle");
+  const handleValidity = useMemo(() => {
+    const trimmedHandle = handle.trim().replace(/^@+/, "");
+    if (!trimmedHandle) {
+      return "idle" as const;
+    }
+    if (
+      trimmedHandle.length < HANDLE_MIN_LENGTH ||
+      trimmedHandle.length > HANDLE_MAX_LENGTH ||
+      !HANDLE_PATTERN.test(trimmedHandle)
+    ) {
+      return "invalid" as const;
+    }
+    return "valid" as const;
+  }, [handle]);
+  const effectiveHandleAvailability: "idle" | "checking" | "available" | "unavailable" | "invalid" =
+    handleValidity === "valid" ? handleAvailability : handleValidity;
 
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
@@ -305,25 +321,12 @@ export default function ProfilePage() {
   }, [hasAuth, token, userId]);
 
   useEffect(() => {
-    if (!hasAuth) {
+    if (!hasAuth || handleValidity !== "valid") {
       return;
     }
     const trimmedHandle = handle.trim().replace(/^@+/, "");
-    if (!trimmedHandle) {
-      setHandleAvailability("idle");
-      return;
-    }
-    if (
-      trimmedHandle.length < HANDLE_MIN_LENGTH ||
-      trimmedHandle.length > HANDLE_MAX_LENGTH ||
-      !HANDLE_PATTERN.test(trimmedHandle)
-    ) {
-      setHandleAvailability("invalid");
-      return;
-    }
-
-    setHandleAvailability("checking");
     const timeout = window.setTimeout(() => {
+      setHandleAvailability("checking");
       getJson<HandleCheckResponse>(
         `/profile/handle/check?handle=${encodeURIComponent(trimmedHandle)}`,
       )
@@ -336,7 +339,7 @@ export default function ProfilePage() {
     }, 500);
 
     return () => window.clearTimeout(timeout);
-  }, [handle, hasAuth]);
+  }, [handle, hasAuth, handleValidity]);
 
   const onSave = async () => {
     setMessage(null);
@@ -506,16 +509,16 @@ export default function ProfilePage() {
             {fieldErrors.handle ? (
               <span className={styles.helper}>{fieldErrors.handle}</span>
             ) : null}
-            {!fieldErrors.handle && handleAvailability === "checking" ? (
+            {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
               <span className={styles.helper}>Checking availability…</span>
             ) : null}
-            {!fieldErrors.handle && handleAvailability === "available" ? (
+            {!fieldErrors.handle && effectiveHandleAvailability === "available" ? (
               <span className={styles.helperSuccess}>Handle is available.</span>
             ) : null}
-            {!fieldErrors.handle && handleAvailability === "unavailable" ? (
+            {!fieldErrors.handle && effectiveHandleAvailability === "unavailable" ? (
               <span className={styles.helperError}>Handle is taken.</span>
             ) : null}
-            {!fieldErrors.handle && handleAvailability === "invalid" ? (
+            {!fieldErrors.handle && effectiveHandleAvailability === "invalid" ? (
               <span className={styles.helperError}>
                 Handle must be 3–20 letters or numbers.
               </span>
