@@ -60,7 +60,8 @@ export default function ProfilePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const hasAuth = Boolean(token && userId);
-  const [loading, setLoading] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const loading = hasAuth && !profileLoaded;
   const [message, setMessage] = useState<string | null>(null);
 
   const [handle, setHandle] = useState("");
@@ -101,11 +102,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!hasAuth) {
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     getJson<ProfileResponse>("/profile")
       .then((data) => {
         setHandle(data.profile.handle ?? "");
@@ -148,7 +147,9 @@ export default function ProfilePage() {
             : "Could not load your profile yet.",
         );
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setProfileLoaded(true);
+      });
   }, [hasAuth, token, userId]);
 
   const onSave = async () => {
