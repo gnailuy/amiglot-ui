@@ -8,7 +8,19 @@ type ApiErrorShape = {
     message?: string;
     details?: Record<string, string>;
   };
+  detail?: string;
+  message?: string;
+  title?: string;
 };
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
 
 function buildHeaders(options: { token?: string } = {}): Record<string, string> {
   const headers: Record<string, string> = {
@@ -56,8 +68,10 @@ export async function postJson<T>(
   if (!response.ok) {
     const message =
       (data as ApiErrorShape)?.error?.message ??
+      (data as ApiErrorShape)?.detail ??
+      (data as ApiErrorShape)?.message ??
       `Request failed (${response.status})`;
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   return data as T;
@@ -81,8 +95,10 @@ export async function getJson<T>(
   if (!response.ok) {
     const message =
       (data as ApiErrorShape)?.error?.message ??
+      (data as ApiErrorShape)?.detail ??
+      (data as ApiErrorShape)?.message ??
       `Request failed (${response.status})`;
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   return data as T;
@@ -108,8 +124,10 @@ export async function putJson<T>(
   if (!response.ok) {
     const message =
       (data as ApiErrorShape)?.error?.message ??
+      (data as ApiErrorShape)?.detail ??
+      (data as ApiErrorShape)?.message ??
       `Request failed (${response.status})`;
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   return data as T;

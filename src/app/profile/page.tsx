@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
-import { getJson, putJson } from "@/lib/api";
+import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
 
 type ProfilePayload = {
@@ -141,6 +141,10 @@ export default function ProfilePage() {
         setMessage(null);
       })
       .catch((error) => {
+        if (error instanceof ApiError && error.status === 404) {
+          setMessage(null);
+          return;
+        }
         setMessage(
           error instanceof Error
             ? error.message
