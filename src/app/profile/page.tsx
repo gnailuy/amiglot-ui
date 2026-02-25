@@ -193,9 +193,9 @@ export default function ProfilePage() {
       description: "",
     },
   ]);
-  const [availability, setAvailability] = useState<AvailabilityDraft[]>([
   const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
 
+  const [availability, setAvailability] = useState<AvailabilityDraft[]>([
     {
       weekdays: [1],
       start_local_time: "18:00",
