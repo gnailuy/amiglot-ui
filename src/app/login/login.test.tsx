@@ -1,0 +1,71 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import LoginPage from "./page";
+
+const postJson = vi.fn();
+
+vi.mock("@/lib/api", () => ({
+  postJson: (...args: unknown[]) => postJson(...args),
+}));
+
+vi.mock("next/link", () => ({
+  default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+describe("LoginPage", () => {
+  beforeEach(() => {
+    postJson.mockReset();
+  });
+
+  it("renders basic form validation attributes", () => {
+    render(<LoginPage />);
+
+    const input = screen.getByLabelText(/email address/i);
+    expect(input).toHaveAttribute("required");
+    expect(input).toHaveAttribute("type", "email");
+  });
+
+  it("submits email and shows success message", async () => {
+    postJson.mockResolvedValue({ ok: true });
+
+    render(<LoginPage />);
+
+    await userEvent.type(screen.getByLabelText(/email address/i), "user@test.com");
+    await userEvent.click(screen.getByRole("button", { name: /send magic link/i }));
+
+    expect(postJson).toHaveBeenCalledWith("/auth/magic-link", { email: "user@test.com" });
+    expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
+  });
+
+  it("shows dev login link when provided", async () => {
+    postJson.mockResolvedValue({ ok: true, dev_login_url: "http://dev-link" });
+
+    render(<LoginPage />);
+
+    await userEvent.type(screen.getByLabelText(/email address/i), "user@test.com");
+    await userEvent.click(screen.getByRole("button", { name: /send magic link/i }));
+
+    expect(await screen.findByText(/dev login link/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "http://dev-link" })).toHaveAttribute(
+      "href",
+      "http://dev-link",
+    );
+  });
+
+  it("shows error message on failure", async () => {
+    postJson.mockRejectedValue(new Error("nope"));
+
+    render(<LoginPage />);
+
+    await userEvent.type(screen.getByLabelText(/email address/i), "user@test.com");
+    await userEvent.click(screen.getByRole("button", { name: /send magic link/i }));
+
+    expect(await screen.findByText("nope")).toBeInTheDocument();
+  });
+});

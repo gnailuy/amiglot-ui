@@ -35,4 +35,59 @@ describe("api helpers", () => {
 
     await expect(getJson("/broken")).rejects.toBeInstanceOf(ApiError);
   });
+
+  it("uses fallback locale and user headers when set", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("crypto", { randomUUID: () => "test-uuid" });
+    vi.stubGlobal("navigator", { language: "" });
+    window.localStorage.setItem("amiglot_user_id", "user-456");
+
+    await getJson("/profile");
+
+    const [, options] = fetchMock.mock.calls[0];
+    expect(options?.headers).toMatchObject({
+      "Accept-Language": "en",
+      "X-User-Id": "user-456",
+    });
+  });
 });
+
+  it("handles error messages from detail and message", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ detail: "Nope" }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getJson("/oops")).rejects.toThrow("Nope");
+  });
+
+  it("supports postJson and putJson", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { postJson, putJson } = await import("./api");
+
+    await postJson("/submit", { ok: true });
+    await putJson("/update", { name: "Arturo" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/submit"),
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/update"),
+      expect.objectContaining({ method: "PUT" }),
+    );
+  });
