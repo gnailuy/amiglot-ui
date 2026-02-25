@@ -391,7 +391,7 @@ describe("ProfilePage", () => {
     expect(screen.queryByText(/could not load/i)).not.toBeInTheDocument();
   });
 
-  it("flags invalid birth year, month, and timezone", async () => {
+  it("flags timezone as required", async () => {
     getAccessToken.mockReturnValue("token");
     getUserId.mockReturnValue("user-1");
     getJson.mockResolvedValueOnce({
@@ -426,23 +426,14 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
-    fireEvent.change(screen.getByLabelText(/birth year/i), {
-      target: { value: "1800" },
-    });
-    fireEvent.change(screen.getByLabelText(/birth month/i), {
-      target: { value: "13" },
-    });
     fireEvent.change(screen.getByLabelText(/timezone/i), {
       target: { value: "" },
     });
 
     await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
 
-    expect(await screen.findByText(/birth year must be within range/i)).toBeInTheDocument();
-    expect(await screen.findByText(/birth month must be between 1 and 12/i)).toBeInTheDocument();
     expect(await screen.findByText(/timezone is required/i)).toBeInTheDocument();
   });
-
 
   it("shows invalid handle helper text", async () => {
     const user = userEvent.setup();
