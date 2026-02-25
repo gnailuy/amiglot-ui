@@ -8,7 +8,7 @@
 **Product constraints (shared)**
 - Day-1 multi-language support for all UI and user-facing API messages.
 - V1 auth via magic link (dev mode: local link generation when `ENV=dev`).
-- Profile: unique handle (letters/numbers/underscore), stored as `@handle`, case-insensitive.
+- Profile: unique handle (letters/numbers/underscore), stored **without** `@` and case-insensitive; UI displays with `@` prefix.
 - Avoid gender; store birth year + month only, derive age on the fly.
 
 > Backend technical design (DB schema, queries, migrations) lives in the API repo:

@@ -74,7 +74,7 @@ flowchart TD
 - **Day‑1 multi‑language support** for all UI and user‑facing API messages (user‑selected language).
 - **Profile minimums**:
   - Email (read‑only after signup)
-  - Unique user handle (letters/numbers only, case‑insensitive; stored **without** `@`, e.g., `arturo`; UI displays with `@` prefix; URLs use clean handle)
+  - Unique user handle (letters/numbers/underscore, case‑insensitive; stored **without** `@`, e.g., `arturo`; UI displays with `@` prefix; URLs use clean handle)
   - Languages list with levels; **at least one native language** required on registration
 - **Profile edit rules**:
   - Email is read‑only after signup
