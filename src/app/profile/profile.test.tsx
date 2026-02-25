@@ -89,7 +89,7 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
 
     expect(await screen.findByText(/profile setup/i)).toBeInTheDocument();
-    expect(screen.getByDisplayValue("user@example.com")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("user@example.com")).toBeInTheDocument();
   });
 
   it("validates required fields on save", async () => {
@@ -108,7 +108,7 @@ describe("ProfilePage", () => {
       languages: [
         {
           language_code: "en",
-          level: 0,
+          level: 5,
           is_native: true,
           is_target: false,
           description: "",
@@ -248,7 +248,7 @@ describe("ProfilePage", () => {
       languages: [
         {
           language_code: "en",
-          level: 0,
+          level: 5,
           is_native: true,
           is_target: false,
           description: "",

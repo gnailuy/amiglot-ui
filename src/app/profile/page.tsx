@@ -342,9 +342,13 @@ export default function ProfilePage() {
     const trimmedHandle = handle.trim().replace(/^@+/, "");
     const timeout = window.setTimeout(() => {
       setHandleAvailability("checking");
-      getJson<HandleCheckResponse>(
+      const request = getJson<HandleCheckResponse>(
         `/profile/handle/check?handle=${encodeURIComponent(trimmedHandle)}`,
-      )
+      );
+      if (!request || typeof (request as Promise<HandleCheckResponse>).then !== "function") {
+        return;
+      }
+      request
         .then((data) => {
           setHandleAvailability(data.available ? "available" : "unavailable");
         })
