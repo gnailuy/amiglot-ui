@@ -29,12 +29,14 @@ describe("session helpers", () => {
     clearUserId();
     expect(getUserId()).toBeNull();
   });
-});
 
   it("handles missing window", () => {
-    const originalWindow = (globalThis as any).window;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).window = undefined;
+    type GlobalWithMaybeWindow = Omit<typeof globalThis, "window"> & {
+      window?: Window & typeof globalThis;
+    };
+    const globalWithMaybeWindow = globalThis as GlobalWithMaybeWindow;
+    const originalWindow = globalWithMaybeWindow.window;
+    delete globalWithMaybeWindow.window;
 
     expect(getAccessToken()).toBeNull();
     expect(getUserId()).toBeNull();
@@ -44,5 +46,8 @@ describe("session helpers", () => {
     clearAccessToken();
     clearUserId();
 
-    (globalThis as any).window = originalWindow;
+    if (originalWindow) {
+      globalWithMaybeWindow.window = originalWindow;
+    }
   });
+});
