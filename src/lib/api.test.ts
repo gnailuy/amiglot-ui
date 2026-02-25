@@ -56,3 +56,38 @@ describe("api helpers", () => {
     });
   });
 });
+
+  it("handles error messages from detail and message", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ detail: "Nope" }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getJson("/oops")).rejects.toThrow("Nope");
+  });
+
+  it("supports postJson and putJson", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { postJson, putJson } = await import("./api");
+
+    await postJson("/submit", { ok: true });
+    await putJson("/update", { name: "Arturo" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/submit"),
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/update"),
+      expect.objectContaining({ method: "PUT" }),
+    );
+  });

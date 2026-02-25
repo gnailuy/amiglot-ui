@@ -30,3 +30,19 @@ describe("session helpers", () => {
     expect(getUserId()).toBeNull();
   });
 });
+
+  it("handles missing window", () => {
+    const originalWindow = (globalThis as any).window;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).window = undefined;
+
+    expect(getAccessToken()).toBeNull();
+    expect(getUserId()).toBeNull();
+
+    setAccessToken("token");
+    setUserId("user");
+    clearAccessToken();
+    clearUserId();
+
+    (globalThis as any).window = originalWindow;
+  });
