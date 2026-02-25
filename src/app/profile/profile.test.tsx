@@ -368,4 +368,116 @@ describe("ProfilePage", () => {
     await user.type(timeInputs[1], "21:00");
   });
 
+
+  it("shows profile load error message", async () => {
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson.mockRejectedValueOnce(new Error("boom"));
+
+    render(<ProfilePage />);
+
+    expect(await screen.findByText(/boom/)).toBeInTheDocument();
+  });
+
+  it("handles 404 profile load without error", async () => {
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    const ApiError = (await import("@/lib/api")).ApiError;
+    getJson.mockRejectedValueOnce(new ApiError("not found", 404));
+
+    render(<ProfilePage />);
+
+    await screen.findByText(/profile setup/i);
+    expect(screen.queryByText(/could not load/i)).not.toBeInTheDocument();
+  });
+
+  it("shows invalid handle helper text", async () => {
+    const user = userEvent.setup();
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson.mockResolvedValueOnce({
+      user: { id: "user-1", email: "user@example.com" },
+      profile: {
+        handle: "arturo",
+        birth_year: null,
+        birth_month: null,
+        country_code: null,
+        timezone: "America/Vancouver",
+        discoverable: false,
+      },
+      languages: [
+        {
+          language_code: "en",
+          level: 5,
+          is_native: true,
+          is_target: false,
+          description: "",
+        },
+      ],
+      availability: [
+        {
+          weekday: 1,
+          start_local_time: "18:00",
+          end_local_time: "20:00",
+          timezone: "America/Vancouver",
+        },
+      ],
+    });
+
+    render(<ProfilePage />);
+    await screen.findByText(/profile setup/i);
+
+    const handleInput = screen.getByPlaceholderText("arturo");
+    await user.clear(handleInput);
+    await user.type(handleInput, "ab");
+
+    expect(await screen.findByText(/handle must be 3–20/i)).toBeInTheDocument();
+  });
+
+  it("shows handle unavailable status", async () => {
+    const user = userEvent.setup();
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson
+      .mockResolvedValueOnce({
+        user: { id: "user-1", email: "user@example.com" },
+        profile: {
+          handle: "arturo",
+          birth_year: null,
+          birth_month: null,
+          country_code: null,
+          timezone: "America/Vancouver",
+          discoverable: false,
+        },
+        languages: [
+          {
+            language_code: "en",
+            level: 5,
+            is_native: true,
+            is_target: false,
+            description: "",
+          },
+        ],
+        availability: [
+          {
+            weekday: 1,
+            start_local_time: "18:00",
+            end_local_time: "20:00",
+            timezone: "America/Vancouver",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ available: false });
+
+    render(<ProfilePage />);
+    await screen.findByText(/profile setup/i);
+
+    const handleInput = screen.getByPlaceholderText("arturo");
+    await user.clear(handleInput);
+    await user.type(handleInput, "nova");
+    await new Promise((resolve) => setTimeout(resolve, 650));
+
+    expect(await screen.findByText(/handle is taken/i)).toBeInTheDocument();
+  });
+
 });
