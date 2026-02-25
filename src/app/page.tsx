@@ -31,7 +31,14 @@ export default function Home() {
         <p className={styles.subtitle}>
           Find language partners. Learn together.
         </p>
-        {isMounted && token ? (
+        {!isMounted ? (
+          <div className={styles.session}>
+            <div className={styles.spinner} aria-hidden="true" />
+            <span className={styles.srOnly}>
+              Checking your sign-in status...
+            </span>
+          </div>
+        ) : token ? (
           <div className={styles.session}>
             <p>You&apos;re signed in.</p>
             <div className={styles.actions}>
