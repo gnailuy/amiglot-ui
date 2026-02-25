@@ -274,8 +274,7 @@ describe("ProfilePage", () => {
   });
 
   it("shows handle availability status", async () => {
-    vi.useFakeTimers();
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const user = userEvent.setup();
     getAccessToken.mockReturnValue("token");
     getUserId.mockReturnValue("user-1");
     getJson
@@ -315,10 +314,9 @@ describe("ProfilePage", () => {
     const handleInput = screen.getByPlaceholderText("arturo");
     await user.clear(handleInput);
     await user.type(handleInput, "neo");
-    await vi.advanceTimersByTimeAsync(600);
+    await new Promise((resolve) => setTimeout(resolve, 650));
 
     expect(await screen.findByText(/handle is available/i)).toBeInTheDocument();
-    vi.useRealTimers();
   });
 
   it("updates language and availability inputs", async () => {
