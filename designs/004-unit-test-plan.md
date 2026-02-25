@@ -22,7 +22,8 @@ Establish a unit testing baseline for the UI repo and outline the priority areas
 - **Edge UI states**: empty data states, error boundaries, and localization fallbacks.
 
 ## 4. Test Environment Notes
-- Tests run via `npm run test` in CI.
+- CI runs `npm run test:coverage`.
+- Local runs: `npm run test` (or `npm run test:coverage` for coverage output).
 - Use mocked `fetch` for API helpers and mocked `localStorage`/`sessionStorage` where needed.
 
 ## 5. Current Status
