@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { getJson, putJson } from "@/lib/api";
@@ -56,10 +56,11 @@ const WEEKDAYS = [
 ];
 
 export default function ProfilePage() {
-  const token = useMemo(() => getAccessToken(), []);
-  const userId = useMemo(() => getUserId(), []);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const hasAuth = Boolean(token && userId);
-  const [loading, setLoading] = useState(hasAuth);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const [handle, setHandle] = useState("");
@@ -88,10 +89,23 @@ export default function ProfilePage() {
   ]);
 
   useEffect(() => {
+    const tokenValue = getAccessToken();
+    const userIdValue = getUserId();
+    const frame = requestAnimationFrame(() => {
+      setToken(tokenValue);
+      setUserId(userIdValue);
+      setIsMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
     if (!hasAuth) {
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
     getJson<ProfileResponse>("/profile")
       .then((data) => {
         setHandle(data.profile.handle ?? "");
@@ -172,6 +186,17 @@ export default function ProfilePage() {
       );
     }
   };
+
+  if (!isMounted) {
+    return (
+      <div className={styles.page}>
+        <main className={styles.card}>
+          <h1>Profile setup</h1>
+          <p>Loading your session...</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!token || !userId) {
     return (
