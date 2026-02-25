@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -390,6 +390,59 @@ describe("ProfilePage", () => {
     await screen.findByText(/profile setup/i);
     expect(screen.queryByText(/could not load/i)).not.toBeInTheDocument();
   });
+
+  it("flags invalid birth year, month, and timezone", async () => {
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson.mockResolvedValueOnce({
+      user: { id: "user-1", email: "user@example.com" },
+      profile: {
+        handle: "arturo",
+        birth_year: null,
+        birth_month: null,
+        country_code: null,
+        timezone: "America/Vancouver",
+        discoverable: false,
+      },
+      languages: [
+        {
+          language_code: "en",
+          level: 5,
+          is_native: true,
+          is_target: false,
+          description: "",
+        },
+      ],
+      availability: [
+        {
+          weekday: 1,
+          start_local_time: "18:00",
+          end_local_time: "20:00",
+          timezone: "America/Vancouver",
+        },
+      ],
+    });
+
+    render(<ProfilePage />);
+    await screen.findByText(/profile setup/i);
+
+    fireEvent.change(screen.getByLabelText(/birth year/i), {
+      target: { value: "1800" },
+    });
+    fireEvent.change(screen.getByLabelText(/birth month/i), {
+      target: { value: "13" },
+    });
+    fireEvent.change(screen.getByLabelText(/timezone/i), {
+      target: { value: "" },
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
+
+    expect(await screen.findByText(/birth year must be within range/i)).toBeInTheDocument();
+    expect(await screen.findByText(/birth month must be between 1 and 12/i)).toBeInTheDocument();
+    expect(await screen.findByText(/timezone is required/i)).toBeInTheDocument();
+  });
+
 
   it("shows invalid handle helper text", async () => {
     const user = userEvent.setup();
