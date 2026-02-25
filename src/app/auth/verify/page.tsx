@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { postJson } from "@/lib/api";
-import { setAccessToken } from "@/lib/session";
+import { setAccessToken, setUserId } from "@/lib/session";
 import styles from "./verify.module.css";
 
 type VerifyResponse = {
@@ -32,6 +32,7 @@ function VerifyPageContent() {
     postJson<VerifyResponse>("/auth/verify", { token })
       .then((data) => {
         setAccessToken(data.access_token);
+        setUserId(data.user.id);
         setStatus("success");
         setMessage("You're signed in. Welcome back!");
       })

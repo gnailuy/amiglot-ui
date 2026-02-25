@@ -73,7 +73,7 @@ Response:
 
 ---
 ### 2.3 Profile
-**GET /me**
+**GET /profile**
 Response:
 ```json
 {
@@ -101,8 +101,8 @@ Response:
 }
 ```
 
-**POST /profile**
-Create initial profile (required after first login).
+**PUT /profile**
+Create or update profile fields (email is read-only). Full replace of profile fields; use null for optional fields if clearing.
 Request:
 ```json
 {
@@ -110,19 +110,10 @@ Request:
   "birth_year": 1992,
   "birth_month": 8,
   "country_code": "CA",
-  "timezone": "America/Vancouver",
-  "languages": [
-    { "language_code": "en", "level": 5, "is_native": true, "is_target": false }
-  ],
-  "availability": [
-    { "weekday": 1, "start_local_time": "18:00", "end_local_time": "20:00", "timezone": "America/Vancouver" }
-  ]
+  "timezone": "America/Vancouver"
 }
 ```
-Response: same shape as `GET /me`.
-
-**PATCH /profile**
-Update profile fields (email is read-only). Same shape as above; partial updates allowed.
+Response: same shape as `GET /profile`.
 
 **POST /profile/handle/check**
 Request:

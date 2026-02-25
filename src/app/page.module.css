@@ -32,6 +32,13 @@
   align-items: center;
 }
 
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
 .primary {
   display: inline-flex;
   justify-content: center;
