@@ -193,8 +193,6 @@ export default function ProfilePage() {
       description: "",
     },
   ]);
-  const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
-
   const [availability, setAvailability] = useState<AvailabilityDraft[]>([
     {
       weekdays: [1],
@@ -211,9 +209,10 @@ export default function ProfilePage() {
       years.push(year);
     }
     return years;
-  }, [supportedValuesOf]);
+  }, []);
 
   const countryOptions = useMemo(() => {
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
     const regions =
       typeof supportedValuesOf === "function"
         ? supportedValuesOf("region")
@@ -225,9 +224,10 @@ export default function ProfilePage() {
       normalized.length ? normalized : DEFAULT_COUNTRY_CODES,
       "region",
     );
-  }, [supportedValuesOf]);
+  }, []);
 
   const languageOptions = useMemo(() => {
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
     const languages =
       typeof supportedValuesOf === "function"
         ? supportedValuesOf("language")
@@ -239,9 +239,10 @@ export default function ProfilePage() {
       normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
       "language",
     );
-  }, [supportedValuesOf]);
+  }, []);
 
   const timezoneOptions = useMemo(() => {
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
     const timezones =
       typeof supportedValuesOf === "function"
         ? supportedValuesOf("timeZone")
