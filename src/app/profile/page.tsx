@@ -194,6 +194,8 @@ export default function ProfilePage() {
     },
   ]);
   const [availability, setAvailability] = useState<AvailabilityDraft[]>([
+  const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+
     {
       weekdays: [1],
       start_local_time: "18:00",
@@ -213,8 +215,8 @@ export default function ProfilePage() {
 
   const countryOptions = useMemo(() => {
     const regions =
-      typeof Intl.supportedValuesOf === "function"
-        ? Intl.supportedValuesOf("region")
+      typeof supportedValuesOf === "function"
+        ? supportedValuesOf("region")
         : DEFAULT_COUNTRY_CODES;
     const normalized = regions
       .map((code) => code.toUpperCase())
@@ -227,8 +229,8 @@ export default function ProfilePage() {
 
   const languageOptions = useMemo(() => {
     const languages =
-      typeof Intl.supportedValuesOf === "function"
-        ? Intl.supportedValuesOf("language")
+      typeof supportedValuesOf === "function"
+        ? supportedValuesOf("language")
         : DEFAULT_LANGUAGE_CODES;
     const normalized = languages
       .map((code) => code.toLowerCase())
@@ -241,8 +243,8 @@ export default function ProfilePage() {
 
   const timezoneOptions = useMemo(() => {
     const timezones =
-      typeof Intl.supportedValuesOf === "function"
-        ? Intl.supportedValuesOf("timeZone")
+      typeof supportedValuesOf === "function"
+        ? supportedValuesOf("timeZone")
         : ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
     return buildTimezoneOptions(timezones);
   }, []);
