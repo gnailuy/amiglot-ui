@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -232,6 +232,88 @@ describe("ProfilePage", () => {
     expect(await screen.findByText(/profile saved/i)).toBeInTheDocument();
   });
 
+  it("submits profile updates with birth info", async () => {
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson
+      .mockResolvedValueOnce({
+        user: { id: "user-1", email: "user@example.com" },
+        profile: {
+          handle: "arturo",
+          birth_year: null,
+          birth_month: null,
+          country_code: null,
+          timezone: "America/Vancouver",
+          discoverable: false,
+        },
+        languages: [
+          {
+            language_code: "en",
+            level: 5,
+            is_native: true,
+            is_target: false,
+            description: "",
+          },
+        ],
+        availability: [
+          {
+            weekday: 1,
+            start_local_time: "18:00",
+            end_local_time: "20:00",
+            timezone: "America/Vancouver",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        user: { id: "user-1", email: "user@example.com" },
+        profile: {
+          handle: "arturo",
+          birth_year: 2000,
+          birth_month: 1,
+          country_code: null,
+          timezone: "America/Vancouver",
+          discoverable: true,
+        },
+        languages: [
+          {
+            language_code: "en",
+            level: 5,
+            is_native: true,
+            is_target: false,
+            description: "",
+          },
+        ],
+        availability: [
+          {
+            weekday: 1,
+            start_local_time: "18:00",
+            end_local_time: "20:00",
+            timezone: "America/Vancouver",
+          },
+        ],
+      });
+    putJson.mockResolvedValue({});
+
+    render(<ProfilePage />);
+
+    await screen.findByText(/profile setup/i);
+
+    const selects = screen.getAllByRole("combobox");
+    await userEvent.selectOptions(selects[0], "2000");
+    await userEvent.selectOptions(selects[1], "1");
+
+    await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
+
+    expect(putJson).toHaveBeenCalledWith("/profile", {
+      handle: "arturo",
+      birth_year: 2000,
+      birth_month: 1,
+      country_code: null,
+      timezone: "America/Vancouver",
+    });
+    expect(await screen.findByText(/profile saved/i)).toBeInTheDocument();
+  });
+
   it("shows error when save fails", async () => {
     getAccessToken.mockReturnValue("token");
     getUserId.mockReturnValue("user-1");
@@ -433,6 +515,98 @@ describe("ProfilePage", () => {
     await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
 
     expect(await screen.findByText(/timezone is required/i)).toBeInTheDocument();
+  });
+
+  it("rejects invalid handle characters on save", async () => {
+    const user = userEvent.setup();
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson.mockResolvedValueOnce({
+      user: { id: "user-1", email: "user@example.com" },
+      profile: {
+        handle: "arturo",
+        birth_year: null,
+        birth_month: null,
+        country_code: null,
+        timezone: "America/Vancouver",
+        discoverable: false,
+      },
+      languages: [
+        {
+          language_code: "en",
+          level: 5,
+          is_native: true,
+          is_target: false,
+          description: "",
+        },
+      ],
+      availability: [
+        {
+          weekday: 1,
+          start_local_time: "18:00",
+          end_local_time: "20:00",
+          timezone: "America/Vancouver",
+        },
+      ],
+    });
+
+    render(<ProfilePage />);
+    await screen.findByText(/profile setup/i);
+
+    const handleInput = screen.getByPlaceholderText("arturo");
+    await user.clear(handleInput);
+    await user.type(handleInput, "neo!");
+    await user.click(screen.getByRole("button", { name: /save profile/i }));
+
+    expect(await screen.findByText(/handle can only use letters and numbers/i)).toBeInTheDocument();
+    expect(putJson).not.toHaveBeenCalled();
+  });
+
+  it("requires at least one native language", async () => {
+    const user = userEvent.setup();
+    getAccessToken.mockReturnValue("token");
+    getUserId.mockReturnValue("user-1");
+    getJson.mockResolvedValueOnce({
+      user: { id: "user-1", email: "user@example.com" },
+      profile: {
+        handle: "arturo",
+        birth_year: null,
+        birth_month: null,
+        country_code: null,
+        timezone: "America/Vancouver",
+        discoverable: false,
+      },
+      languages: [
+        {
+          language_code: "en",
+          level: 5,
+          is_native: true,
+          is_target: false,
+          description: "",
+        },
+      ],
+      availability: [
+        {
+          weekday: 1,
+          start_local_time: "18:00",
+          end_local_time: "20:00",
+          timezone: "America/Vancouver",
+        },
+      ],
+    });
+
+    render(<ProfilePage />);
+    await screen.findByText(/profile setup/i);
+
+    const languageSection = screen.getByRole("heading", { name: /languages/i }).closest("section");
+    const languageSelects = within(languageSection as HTMLElement).getAllByRole("combobox");
+    const levelSelect = languageSelects[1];
+    await user.selectOptions(levelSelect, "4");
+
+    await user.click(screen.getByRole("button", { name: /save profile/i }));
+
+    expect(await screen.findByText(/at least one native language is required/i)).toBeInTheDocument();
+    expect(putJson).not.toHaveBeenCalled();
   });
 
   it("shows invalid handle helper text", async () => {

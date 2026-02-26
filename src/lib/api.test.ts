@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ApiError, getJson } from "./api";
+import { ApiError, getJson, postJson, putJson } from "./api";
 
 describe("api helpers", () => {
   it("includes auth and request headers", async () => {
@@ -21,6 +21,27 @@ describe("api helpers", () => {
       "X-Request-Id": "test-uuid",
       "Content-Type": "application/json",
     });
+  });
+
+  it("uses session token and locale when available", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("navigator", { language: "fr-CA" });
+    vi.stubGlobal("crypto", undefined as unknown as Crypto);
+    window.localStorage.setItem("amiglot_access_token", "token-xyz");
+
+    await getJson("/profile");
+
+    const [, options] = fetchMock.mock.calls[0];
+    expect(options?.headers).toMatchObject({
+      Authorization: "Bearer token-xyz",
+      "Accept-Language": "fr-CA",
+    });
+    expect(options?.headers?.["X-Request-Id"]).toBeUndefined();
   });
 
   it("throws ApiError when response is not ok", async () => {
@@ -55,7 +76,6 @@ describe("api helpers", () => {
       "X-User-Id": "user-456",
     });
   });
-});
 
   it("handles error messages from detail and message", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
@@ -69,6 +89,30 @@ describe("api helpers", () => {
     await expect(getJson("/oops")).rejects.toThrow("Nope");
   });
 
+  it("falls back to top-level message when provided", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: "Something went wrong" }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getJson("/oops")).rejects.toThrow("Something went wrong");
+  });
+
+  it("uses default message when response has no error shape", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({}),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getJson("/oops")).rejects.toThrow("Request failed (503)");
+  });
+
   it("supports postJson and putJson", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -76,8 +120,6 @@ describe("api helpers", () => {
     });
 
     vi.stubGlobal("fetch", fetchMock);
-
-    const { postJson, putJson } = await import("./api");
 
     await postJson("/submit", { ok: true });
     await putJson("/update", { name: "Arturo" });
@@ -91,3 +133,4 @@ describe("api helpers", () => {
       expect.objectContaining({ method: "PUT" }),
     );
   });
+});
