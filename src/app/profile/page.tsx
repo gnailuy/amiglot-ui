@@ -416,6 +416,16 @@ export default function ProfilePage() {
       nextErrors.languages = "Please fill every language code or remove empty rows.";
     }
 
+    const normalizedLanguageCodes = cleanedLanguages
+      .map((lang) => lang.language_code)
+      .filter(Boolean);
+    const duplicateLanguageCodes = normalizedLanguageCodes.filter(
+      (code, index) => normalizedLanguageCodes.indexOf(code) !== index,
+    );
+    if (duplicateLanguageCodes.length) {
+      nextErrors.languages = "Each language can only be added once.";
+    }
+
     const nativeCount = cleanedLanguages.filter((lang) => lang.is_native).length;
     if (nativeCount === 0) {
       nextErrors.languages = "At least one native language is required.";
