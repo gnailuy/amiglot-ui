@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { ApiError, getJson, putJson } from "@/lib/api";
@@ -30,10 +30,30 @@ type AvailabilityPayload = {
   timezone: string;
 };
 
+type AvailabilityDraft = {
+  weekdays: number[];
+  start_local_time: string;
+  end_local_time: string;
+  timezone: string;
+};
+
 type ProfileResponse = {
+  user: {
+    id: string;
+    email: string;
+  };
   profile: ProfilePayload;
   languages: LanguagePayload[];
   availability: AvailabilityPayload[];
+};
+
+type HandleCheckResponse = {
+  available: boolean;
+};
+
+type Option = {
+  value: string;
+  label: string;
 };
 
 const PROFICIENCY_LABELS: Record<number, string> = {
@@ -45,6 +65,11 @@ const PROFICIENCY_LABELS: Record<number, string> = {
   5: "Native",
 };
 
+const HANDLE_PATTERN = /^[a-zA-Z0-9]+$/;
+const HANDLE_MIN_LENGTH = 3;
+const HANDLE_MAX_LENGTH = 20;
+const BIRTH_YEAR_MIN = 1900;
+
 const WEEKDAYS = [
   "Sunday",
   "Monday",
@@ -55,6 +80,72 @@ const WEEKDAYS = [
   "Saturday",
 ];
 
+const MONTHS = [
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+const DEFAULT_COUNTRY_CODES = [
+  "CA",
+  "US",
+  "GB",
+  "AU",
+  "NZ",
+  "DE",
+  "FR",
+  "ES",
+  "IT",
+  "BR",
+  "MX",
+  "IN",
+  "JP",
+  "KR",
+  "CN",
+];
+
+const DEFAULT_LANGUAGE_CODES = [
+  "en",
+  "es",
+  "fr",
+  "de",
+  "pt",
+  "it",
+  "zh",
+  "ja",
+  "ko",
+  "ar",
+];
+
+function buildOptions(values: string[], type: "language" | "region"): Option[] {
+  const locale =
+    typeof navigator !== "undefined" && navigator.language
+      ? navigator.language
+      : "en";
+  const display = new Intl.DisplayNames([locale], { type });
+  return values
+    .map((value) => ({
+      value,
+      label: `${display.of(value) ?? value} (${value})`,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function buildTimezoneOptions(values: string[]): Option[] {
+  return values
+    .map((value) => ({ value, label: value }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export default function ProfilePage() {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -63,6 +154,7 @@ export default function ProfilePage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const loading = hasAuth && !profileLoaded;
   const [message, setMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [handle, setHandle] = useState("");
   const [birthYear, setBirthYear] = useState("");
@@ -70,6 +162,27 @@ export default function ProfilePage() {
   const [countryCode, setCountryCode] = useState("");
   const [timezone, setTimezone] = useState("America/Vancouver");
   const [discoverable, setDiscoverable] = useState<boolean | null>(null);
+  const [email, setEmail] = useState("");
+
+  const [handleAvailability, setHandleAvailability] = useState<
+    "idle" | "checking" | "available" | "unavailable"
+  >("idle");
+  const handleValidity = useMemo(() => {
+    const trimmedHandle = handle.trim().replace(/^@+/, "");
+    if (!trimmedHandle) {
+      return "idle" as const;
+    }
+    if (
+      trimmedHandle.length < HANDLE_MIN_LENGTH ||
+      trimmedHandle.length > HANDLE_MAX_LENGTH ||
+      !HANDLE_PATTERN.test(trimmedHandle)
+    ) {
+      return "invalid" as const;
+    }
+    return "valid" as const;
+  }, [handle]);
+  const effectiveHandleAvailability: "idle" | "checking" | "available" | "unavailable" | "invalid" =
+    handleValidity === "valid" ? handleAvailability : handleValidity;
 
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
@@ -80,14 +193,74 @@ export default function ProfilePage() {
       description: "",
     },
   ]);
-  const [availability, setAvailability] = useState<AvailabilityPayload[]>([
+  const [availability, setAvailability] = useState<AvailabilityDraft[]>([
     {
-      weekday: 1,
+      weekdays: [1],
       start_local_time: "18:00",
       end_local_time: "20:00",
       timezone: "",
     },
   ]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    for (let year = currentYear; year >= BIRTH_YEAR_MIN; year -= 1) {
+      years.push(year);
+    }
+    return years;
+  }, []);
+
+  const countryOptions = useMemo(() => {
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+    let regions = DEFAULT_COUNTRY_CODES;
+    if (typeof supportedValuesOf === "function") {
+      try {
+        regions = supportedValuesOf("region");
+      } catch {
+        regions = DEFAULT_COUNTRY_CODES;
+      }
+    }
+    const normalized = regions
+      .map((code) => code.toUpperCase())
+      .filter((code) => code.length === 2);
+    return buildOptions(
+      normalized.length ? normalized : DEFAULT_COUNTRY_CODES,
+      "region",
+    );
+  }, []);
+
+  const languageOptions = useMemo(() => {
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+    let languages = DEFAULT_LANGUAGE_CODES;
+    if (typeof supportedValuesOf === "function") {
+      try {
+        languages = supportedValuesOf("language");
+      } catch {
+        languages = DEFAULT_LANGUAGE_CODES;
+      }
+    }
+    const normalized = languages
+      .map((code) => code.toLowerCase())
+      .filter((code) => code.length >= 2 && code.length <= 3);
+    return buildOptions(
+      normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
+      "language",
+    );
+  }, []);
+
+  const timezoneOptions = useMemo(() => {
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+    let timezones = ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+    if (typeof supportedValuesOf === "function") {
+      try {
+        timezones = supportedValuesOf("timeZone");
+      } catch {
+        timezones = ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+      }
+    }
+    return buildTimezoneOptions(timezones);
+  }, []);
 
   useEffect(() => {
     const tokenValue = getAccessToken();
@@ -113,6 +286,7 @@ export default function ProfilePage() {
         setCountryCode(data.profile.country_code ?? "");
         setTimezone(data.profile.timezone ?? "America/Vancouver");
         setDiscoverable(data.profile.discoverable ?? null);
+        setEmail(data.user?.email ?? "");
         setLanguages(
           data.languages.length
             ? data.languages
@@ -128,10 +302,15 @@ export default function ProfilePage() {
         );
         setAvailability(
           data.availability.length
-            ? data.availability
+            ? data.availability.map((slot) => ({
+                weekdays: [slot.weekday],
+                start_local_time: slot.start_local_time,
+                end_local_time: slot.end_local_time,
+                timezone: slot.timezone,
+              }))
             : [
                 {
-                  weekday: 1,
+                  weekdays: [1],
                   start_local_time: "18:00",
                   end_local_time: "20:00",
                   timezone: "",
@@ -156,44 +335,109 @@ export default function ProfilePage() {
       });
   }, [hasAuth, token, userId]);
 
+  useEffect(() => {
+    if (!hasAuth || handleValidity !== "valid") {
+      return;
+    }
+    const trimmedHandle = handle.trim().replace(/^@+/, "");
+    const timeout = window.setTimeout(() => {
+      setHandleAvailability("checking");
+      const request = getJson<HandleCheckResponse>(
+        `/profile/handle/check?handle=${encodeURIComponent(trimmedHandle)}`,
+      );
+      if (!request || typeof (request as Promise<HandleCheckResponse>).then !== "function") {
+        return;
+      }
+      request
+        .then((data) => {
+          setHandleAvailability(data.available ? "available" : "unavailable");
+        })
+        .catch(() => {
+          setHandleAvailability("idle");
+        });
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [handle, hasAuth, handleValidity]);
+
   const onSave = async () => {
     setMessage(null);
-    try {
-      const trimmedHandle = handle.trim();
-      if (!trimmedHandle) {
-        setMessage("Handle is required.");
-        return;
-      }
+    const nextErrors: Record<string, string> = {};
 
-      const trimmedTimezone = timezone.trim();
-      if (!trimmedTimezone) {
-        setMessage("Timezone is required.");
-        return;
-      }
+    const trimmedHandle = handle.trim().replace(/^@+/, "");
+    if (!trimmedHandle) {
+      nextErrors.handle = "Handle is required.";
+    } else if (!HANDLE_PATTERN.test(trimmedHandle)) {
+      nextErrors.handle = "Handle can only use letters and numbers.";
+    } else if (
+      trimmedHandle.length < HANDLE_MIN_LENGTH ||
+      trimmedHandle.length > HANDLE_MAX_LENGTH
+    ) {
+      nextErrors.handle = "Handle must be 3–20 characters.";
+    }
 
-      const cleanedLanguages = languages.map((lang) => ({
+    const trimmedTimezone = timezone.trim();
+    if (!trimmedTimezone) {
+      nextErrors.timezone = "Timezone is required.";
+    }
+
+    if (birthYear) {
+      const year = Number(birthYear);
+      const currentYear = new Date().getFullYear();
+      if (Number.isNaN(year) || year < BIRTH_YEAR_MIN || year > currentYear) {
+        nextErrors.birthYear = "Birth year must be within range.";
+      }
+    }
+
+    if (birthMonth) {
+      const month = Number(birthMonth);
+      if (Number.isNaN(month) || month < 1 || month > 12) {
+        nextErrors.birthMonth = "Birth month must be between 1 and 12.";
+      }
+    }
+
+    if (!languages.length) {
+      nextErrors.languages = "At least one language is required.";
+    }
+
+    const cleanedLanguages = languages.map((lang) => {
+      const languageCode = lang.language_code.trim().toLowerCase();
+      const isNative = lang.level === 5;
+      return {
         ...lang,
-        language_code: lang.language_code.trim(),
+        language_code: languageCode,
+        is_native: isNative,
+        is_target: isNative ? false : lang.is_target,
         description: lang.description?.trim() || null,
-      }));
+      };
+    });
 
-      if (cleanedLanguages.some((lang) => !lang.language_code)) {
-        setMessage("Please fill every language code or remove empty rows.");
-        return;
-      }
+    if (cleanedLanguages.some((lang) => !lang.language_code)) {
+      nextErrors.languages = "Please fill every language code or remove empty rows.";
+    }
 
-      if (cleanedLanguages.length === 0) {
-        setMessage("At least one language is required.");
-        return;
-      }
+    const normalizedLanguageCodes = cleanedLanguages
+      .map((lang) => lang.language_code)
+      .filter(Boolean);
+    const duplicateLanguageCodes = normalizedLanguageCodes.filter(
+      (code, index) => normalizedLanguageCodes.indexOf(code) !== index,
+    );
+    if (duplicateLanguageCodes.length) {
+      nextErrors.languages = "Each language can only be added once.";
+    }
 
-      const nativeCount = cleanedLanguages.filter((lang) => lang.is_native)
-        .length;
-      if (nativeCount === 0) {
-        setMessage("At least one native language is required.");
-        return;
-      }
+    const nativeCount = cleanedLanguages.filter((lang) => lang.is_native).length;
+    if (nativeCount === 0) {
+      nextErrors.languages = "At least one native language is required.";
+    }
 
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      setMessage("Please fix the highlighted fields.");
+      return;
+    }
+
+    try {
       await putJson<ProfileResponse>("/profile", {
         handle: trimmedHandle,
         birth_year: birthYear ? Number(birthYear) : null,
@@ -206,11 +450,17 @@ export default function ProfilePage() {
         languages: cleanedLanguages,
       });
 
-      await putJson("/profile/availability", {
-        availability: availability.map((slot) => ({
-          ...slot,
+      const expandedAvailability = availability.flatMap((slot) =>
+        slot.weekdays.map((weekday) => ({
+          weekday,
+          start_local_time: slot.start_local_time,
+          end_local_time: slot.end_local_time,
           timezone: slot.timezone || trimmedTimezone,
         })),
+      );
+
+      await putJson("/profile/availability", {
+        availability: expandedAvailability,
       });
 
       const refreshed = await getJson<ProfileResponse>("/profile");
@@ -274,109 +524,183 @@ export default function ProfilePage() {
         <section className={styles.section}>
           <h2>Profile</h2>
           <label className={styles.label}>
-            Handle (no @)
+            Handle (no @) <span className={styles.required}>*</span>
             <input
-              className={styles.input}
+              className={`${styles.input} ${
+                fieldErrors.handle ? styles.inputError : ""
+              }`}
               value={handle}
-              onChange={(event) => setHandle(event.target.value)}
+              onChange={(event) =>
+                setHandle(event.target.value.replace(/^@+/, ""))
+              }
               placeholder="arturo"
             />
+            {fieldErrors.handle ? (
+              <span className={styles.helper}>{fieldErrors.handle}</span>
+            ) : null}
+            {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
+              <span className={styles.helper}>Checking availability…</span>
+            ) : null}
+            {!fieldErrors.handle && effectiveHandleAvailability === "available" ? (
+              <span className={styles.helperSuccess}>Handle is available.</span>
+            ) : null}
+            {!fieldErrors.handle && effectiveHandleAvailability === "unavailable" ? (
+              <span className={styles.helperError}>Handle is taken.</span>
+            ) : null}
+            {!fieldErrors.handle && effectiveHandleAvailability === "invalid" ? (
+              <span className={styles.helperError}>
+                Handle must be 3–20 letters or numbers.
+              </span>
+            ) : null}
+          </label>
+          <label className={styles.label}>
+            Email (read-only)
+            <input className={styles.input} value={email} readOnly />
           </label>
           <div className={styles.grid}>
             <label className={styles.label}>
               Birth year
-              <input
-                className={styles.input}
-                type="number"
+              <select
+                className={`${styles.select} ${
+                  fieldErrors.birthYear ? styles.inputError : ""
+                }`}
                 value={birthYear}
                 onChange={(event) => setBirthYear(event.target.value)}
-                placeholder="1992"
-              />
+              >
+                <option value="">Select year</option>
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.birthYear ? (
+                <span className={styles.helper}>{fieldErrors.birthYear}</span>
+              ) : null}
             </label>
             <label className={styles.label}>
               Birth month
-              <input
-                className={styles.input}
-                type="number"
+              <select
+                className={`${styles.select} ${
+                  fieldErrors.birthMonth ? styles.inputError : ""
+                }`}
                 value={birthMonth}
                 onChange={(event) => setBirthMonth(event.target.value)}
-                placeholder="8"
-              />
+              >
+                <option value="">Select month</option>
+                {MONTHS.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.birthMonth ? (
+                <span className={styles.helper}>{fieldErrors.birthMonth}</span>
+              ) : null}
             </label>
           </div>
           <div className={styles.grid}>
             <label className={styles.label}>
-              Country code
-              <input
-                className={styles.input}
+              Country
+              <select
+                className={styles.select}
                 value={countryCode}
                 onChange={(event) => setCountryCode(event.target.value)}
-                placeholder="CA"
-              />
+              >
+                <option value="">Select country</option>
+                {countryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className={styles.label}>
-              Timezone
-              <input
-                className={styles.input}
+              Timezone <span className={styles.required}>*</span>
+              <select
+                className={`${styles.select} ${
+                  fieldErrors.timezone ? styles.inputError : ""
+                }`}
                 value={timezone}
                 onChange={(event) => setTimezone(event.target.value)}
-                placeholder="America/Vancouver"
-              />
+              >
+                {timezoneOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.timezone ? (
+                <span className={styles.helper}>{fieldErrors.timezone}</span>
+              ) : null}
             </label>
           </div>
         </section>
 
         <section className={styles.section}>
-          <h2>Languages</h2>
+          <h2>
+            Languages <span className={styles.required}>*</span>
+          </h2>
+          {fieldErrors.languages ? (
+            <p className={styles.helperError}>{fieldErrors.languages}</p>
+          ) : null}
           {languages.map((language, index) => (
             <div key={`lang-${index}`} className={styles.row}>
-              <input
-                className={styles.input}
+              <select
+                className={styles.select}
                 value={language.language_code}
                 onChange={(event) => {
                   const next = [...languages];
-                  next[index] = { ...language, language_code: event.target.value };
+                  next[index] = {
+                    ...language,
+                    language_code: event.target.value,
+                  };
                   setLanguages(next);
                 }}
-                placeholder="en"
-              />
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <select
                 className={styles.select}
                 value={language.level}
                 onChange={(event) => {
                   const next = [...languages];
+                  const nextLevel = Number(event.target.value);
+                  const isNative = nextLevel === 5;
                   next[index] = {
                     ...language,
-                    level: Number(event.target.value),
+                    level: nextLevel,
+                    is_native: isNative,
+                    is_target: isNative ? false : language.is_target,
                   };
                   setLanguages(next);
                 }}
               >
                 {Object.entries(PROFICIENCY_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
-                    {label} ({value})
+                    {label}
                   </option>
                 ))}
               </select>
               <label className={styles.checkbox}>
                 <input
                   type="checkbox"
-                  checked={language.is_native}
-                  onChange={(event) => {
-                    const next = [...languages];
-                    next[index] = { ...language, is_native: event.target.checked };
-                    setLanguages(next);
-                  }}
-                />
-                Native
-              </label>
-              <label className={styles.checkbox}>
-                <input
-                  type="checkbox"
                   checked={language.is_target}
                   onChange={(event) => {
                     const next = [...languages];
-                    next[index] = { ...language, is_target: event.target.checked };
+                    const isTarget = event.target.checked;
+                    const nextLevel =
+                      isTarget && language.level === 5 ? 4 : language.level;
+                    next[index] = {
+                      ...language,
+                      level: nextLevel,
+                      is_native: nextLevel === 5,
+                      is_target: isTarget,
+                    };
                     setLanguages(next);
                   }}
                 />
@@ -428,24 +752,31 @@ export default function ProfilePage() {
           <h2>Availability</h2>
           {availability.map((slot, index) => (
             <div key={`slot-${index}`} className={styles.row}>
-              <select
-                className={styles.select}
-                value={slot.weekday}
-                onChange={(event) => {
-                  const next = [...availability];
-                  next[index] = {
-                    ...slot,
-                    weekday: Number(event.target.value),
-                  };
-                  setAvailability(next);
-                }}
-              >
+              <div className={styles.weekdayGroup}>
                 {WEEKDAYS.map((label, value) => (
-                  <option key={label} value={value}>
-                    {label}
-                  </option>
+                  <label key={label} className={styles.weekdayItem}>
+                    <input
+                      type="checkbox"
+                      checked={slot.weekdays.includes(value)}
+                      onChange={(event) => {
+                        const next = [...availability];
+                        const weekdays = new Set(next[index].weekdays);
+                        if (event.target.checked) {
+                          weekdays.add(value);
+                        } else {
+                          weekdays.delete(value);
+                        }
+                        next[index] = {
+                          ...slot,
+                          weekdays: Array.from(weekdays).sort(),
+                        };
+                        setAvailability(next);
+                      }}
+                    />
+                    {label.slice(0, 3)}
+                  </label>
                 ))}
-              </select>
+              </div>
               <input
                 className={styles.input}
                 type="time"
@@ -472,9 +803,9 @@ export default function ProfilePage() {
                   setAvailability(next);
                 }}
               />
-              <input
-                className={styles.input}
-                value={slot.timezone}
+              <select
+                className={styles.select}
+                value={slot.timezone || timezone}
                 onChange={(event) => {
                   const next = [...availability];
                   next[index] = {
@@ -483,8 +814,13 @@ export default function ProfilePage() {
                   };
                   setAvailability(next);
                 }}
-                placeholder={`Defaults to ${timezone}`}
-              />
+              >
+                {timezoneOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <button
                 className={styles.inlineButton}
                 type="button"
@@ -504,7 +840,7 @@ export default function ProfilePage() {
               setAvailability([
                 ...availability,
                 {
-                  weekday: 1,
+                  weekdays: [1],
                   start_local_time: "18:00",
                   end_local_time: "20:00",
                   timezone: "",
