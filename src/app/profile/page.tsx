@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -17,10 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -76,21 +74,7 @@ type HandleCheckResponse = {
   available: boolean;
 };
 
-type Option = {
-  value: string;
-  label: string;
-};
-
-type ComboboxProps = {
-  id?: string;
-  value: string;
-  options: Option[];
-  onValueChange: (nextValue: string) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-  className?: string;
-};
+type Option = SelectOption;
 
 const PROFICIENCY_LABELS: Record<number, string> = {
   0: "Zero",
@@ -147,65 +131,6 @@ function buildTimezoneOptions(values: string[]): Option[] {
   return values
     .map((value) => ({ value, label: value }))
     .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function Combobox({
-  id,
-  value,
-  options,
-  onValueChange,
-  placeholder = "Select an option",
-  searchPlaceholder = "Search",
-  emptyText = "No matches found.",
-  className,
-}: ComboboxProps) {
-  const [open, setOpen] = useState(false);
-  const selected = options.find((option) => option.value === value);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-        >
-          <span className="truncate">
-            {selected ? selected.label : placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandEmpty>{emptyText}</CommandEmpty>
-          <CommandGroup>
-            {options.map((option) => (
-              <CommandItem
-                key={option.value}
-                value={option.label}
-                onSelect={() => {
-                  onValueChange(option.value);
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    option.value === value ? "opacity-100" : "opacity-0",
-                  )}
-                />
-                {option.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
 }
 
 export default function ProfilePage() {
@@ -801,7 +726,7 @@ export default function ProfilePage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
-                      <Combobox
+                      <SmartSelect
                         id="country"
                         value={countryCode}
                         options={countryOptions}
@@ -814,7 +739,7 @@ export default function ProfilePage() {
                       <Label htmlFor="timezone">
                         Timezone <span className="text-destructive">*</span>
                       </Label>
-                      <Combobox
+                      <SmartSelect
                         id="timezone"
                         value={timezone}
                         options={[{ value: "", label: "Select timezone" }, ...timezoneOptions]}
@@ -858,7 +783,7 @@ export default function ProfilePage() {
                         <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                           <div className="space-y-2">
                             <Label>Language</Label>
-                            <Combobox
+                            <SmartSelect
                               value={language.language_code}
                               options={languageOptions}
                               onValueChange={(nextValue) => {
@@ -1063,7 +988,7 @@ export default function ProfilePage() {
                             </div>
                             <div className="space-y-2">
                               <Label>Timezone</Label>
-                              <Select
+                              <SmartSelect
                                 value={slot.timezone || "profile"}
                                 onValueChange={(value) => {
                                   const next = [...availability];
@@ -1073,19 +998,13 @@ export default function ProfilePage() {
                                   };
                                   setAvailability(next);
                                 }}
-                              >
-                                <SelectTrigger aria-label="Availability timezone">
-                                  <SelectValue placeholder="Use profile timezone" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="profile">Use profile timezone</SelectItem>
-                                  {timezoneOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                options={[
+                                  { value: "profile", label: "Use profile timezone" },
+                                  ...timezoneOptions,
+                                ]}
+                                placeholder="Use profile timezone"
+                                searchPlaceholder="Search timezones"
+                              />
                             </div>
                             <div className="flex items-end">
                               <Button
