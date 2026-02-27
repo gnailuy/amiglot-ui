@@ -694,7 +694,7 @@ export default function ProfilePage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Birth year</Label>
+                      <Label htmlFor="birth-year">Birth year</Label>
                       <SmartSelect
                         id="birth-year"
                         value={birthYear}
@@ -710,7 +710,7 @@ export default function ProfilePage() {
                       ) : null}
                     </div>
                     <div className="space-y-2">
-                      <Label>Birth month</Label>
+                      <Label htmlFor="birth-month">Birth month</Label>
                       <SmartSelect
                         id="birth-month"
                         value={birthMonth}
