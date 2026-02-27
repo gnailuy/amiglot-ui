@@ -203,6 +203,22 @@ export default function ProfilePage() {
     return years;
   }, []);
 
+  const birthYearOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: UNSET_SELECT_VALUE, label: "Select year" },
+      ...yearOptions.map((year) => ({ value: year.toString(), label: year.toString() })),
+    ],
+    [yearOptions],
+  );
+
+  const birthMonthOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: UNSET_SELECT_VALUE, label: "Select month" },
+      ...MONTHS.map((month) => ({ value: month.value, label: month.label })),
+    ],
+    [],
+  );
+
   const countryOptions = useMemo(() => {
     const supportedValuesOf = (Intl as unknown as {
       supportedValuesOf?: (key: string) => string[];
@@ -679,44 +695,31 @@ export default function ProfilePage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Birth year</Label>
-                      <Select value={birthYear} onValueChange={setBirthYear}>
-                        <SelectTrigger
-                          aria-label="Birth year"
-                          className={cn(fieldErrors.birthYear ? "border-destructive" : "")}
-                        >
-                          <SelectValue placeholder="Select year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNSET_SELECT_VALUE}>Select year</SelectItem>
-                          {yearOptions.map((year) => (
-                            <SelectItem key={year} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <SmartSelect
+                        id="birth-year"
+                        value={birthYear}
+                        options={birthYearOptions}
+                        onValueChange={setBirthYear}
+                        placeholder="Select year"
+                        searchPlaceholder="Search years"
+                        searchAriaLabel="Search years"
+                        className={cn(fieldErrors.birthYear ? "border-destructive" : "")}
+                      />
                       {fieldErrors.birthYear ? (
                         <p className="text-xs text-destructive">{fieldErrors.birthYear}</p>
                       ) : null}
                     </div>
                     <div className="space-y-2">
                       <Label>Birth month</Label>
-                      <Select value={birthMonth} onValueChange={setBirthMonth}>
-                        <SelectTrigger
-                          aria-label="Birth month"
-                          className={cn(fieldErrors.birthMonth ? "border-destructive" : "")}
-                        >
-                          <SelectValue placeholder="Select month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNSET_SELECT_VALUE}>Select month</SelectItem>
-                          {MONTHS.map((month) => (
-                            <SelectItem key={month.value} value={month.value}>
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <SmartSelect
+                        id="birth-month"
+                        value={birthMonth}
+                        options={birthMonthOptions}
+                        onValueChange={setBirthMonth}
+                        placeholder="Select month"
+                        longListThreshold={13}
+                        className={cn(fieldErrors.birthMonth ? "border-destructive" : "")}
+                      />
                       {fieldErrors.birthMonth ? (
                         <p className="text-xs text-destructive">{fieldErrors.birthMonth}</p>
                       ) : null}
