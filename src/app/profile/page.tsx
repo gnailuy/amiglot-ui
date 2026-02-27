@@ -133,6 +133,17 @@ function buildTimezoneOptions(values: string[]): Option[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+function getBrowserTimezone() {
+  if (typeof Intl === "undefined" || typeof Intl.DateTimeFormat !== "function") {
+    return "America/Vancouver";
+  }
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Vancouver";
+  } catch {
+    return "America/Vancouver";
+  }
+}
+
 export default function ProfilePage() {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -149,7 +160,7 @@ export default function ProfilePage() {
   const [birthYear, setBirthYear] = useState(UNSET_SELECT_VALUE);
   const [birthMonth, setBirthMonth] = useState(UNSET_SELECT_VALUE);
   const [countryCode, setCountryCode] = useState("");
-  const [timezone, setTimezone] = useState("America/Vancouver");
+  const [timezone, setTimezone] = useState(() => getBrowserTimezone());
   const [discoverable, setDiscoverable] = useState<boolean | null>(null);
 
   const [handleAvailability, setHandleAvailability] = useState<
@@ -192,7 +203,7 @@ export default function ProfilePage() {
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
       language_code: "en",
-      level: 0,
+      level: 5,
       is_native: true,
       is_target: false,
       description: "",
@@ -323,7 +334,8 @@ export default function ProfilePage() {
         setBirthYear(data.profile.birth_year?.toString() ?? UNSET_SELECT_VALUE);
         setBirthMonth(data.profile.birth_month?.toString() ?? UNSET_SELECT_VALUE);
         setCountryCode(data.profile.country_code ?? "");
-        setTimezone(data.profile.timezone ?? "America/Vancouver");
+        const resolvedTimezone = data.profile.timezone?.trim() || getBrowserTimezone();
+        setTimezone(resolvedTimezone);
         setDiscoverable(data.profile.discoverable ?? null);
         setLanguages(
           data.languages.length
@@ -331,7 +343,7 @@ export default function ProfilePage() {
             : [
                 {
                   language_code: "en",
-                  level: 0,
+                  level: 5,
                   is_native: true,
                   is_target: false,
                   description: "",
