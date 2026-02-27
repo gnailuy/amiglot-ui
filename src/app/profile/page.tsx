@@ -127,6 +127,43 @@ function buildOptions(values: string[], type: "language" | "region"): Option[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+function buildLanguageOptions(values: string[]): Option[] {
+  const locale =
+    typeof navigator !== "undefined" && navigator.language
+      ? navigator.language
+      : "en";
+  const display = new Intl.DisplayNames([locale], { type: "language" });
+  const resolveLabel = (value: string) => {
+    try {
+      return display.of(value);
+    } catch {
+      try {
+        return display.of(value.replace(/_/g, "-"));
+      } catch {
+        return undefined;
+      }
+    }
+  };
+  return values
+    .map((value) => {
+      const label = resolveLabel(value);
+      if (!label) {
+        return null;
+      }
+      const normalizedValue = value.replace(/_/g, "-").toLowerCase();
+      const normalizedLabel = label.toLowerCase();
+      if (
+        normalizedLabel === value.toLowerCase() ||
+        normalizedLabel === normalizedValue
+      ) {
+        return null;
+      }
+      return { value, label: `${label} (${value})` };
+    })
+    .filter((option): option is Option => Boolean(option))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function buildTimezoneOptions(values: string[]): Option[] {
   return values
     .map((value) => ({ value, label: value }))
@@ -265,23 +302,11 @@ export default function ProfilePage() {
   }, []);
 
   const languageOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as {
-      supportedValuesOf?: (key: string) => string[];
-    }).supportedValuesOf;
-    let langs = DEFAULT_LANGUAGE_CODES;
-    if (typeof supportedValuesOf === "function") {
-      try {
-        langs = supportedValuesOf("language");
-      } catch {
-        langs = DEFAULT_LANGUAGE_CODES;
-      }
-    }
-    const normalized = langs
+    const normalized = DEFAULT_LANGUAGE_CODES
       .map((code) => code.toLowerCase())
       .filter((code) => code.length >= 2 && code.length <= 15);
-    return buildOptions(
+    return buildLanguageOptions(
       normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
-      "language",
     );
   }, []);
 
