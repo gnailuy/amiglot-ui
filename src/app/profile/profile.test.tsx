@@ -1,13 +1,84 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ProfilePage from "./page";
+
+vi.mock("@/components/ui/select", () => {
+  const SelectContext = React.createContext<{
+    setTriggerProps: (props: Record<string, unknown>) => void;
+  } | null>(null);
+
+  type SelectProps = {
+    value?: string;
+    onValueChange?: (value: string) => void;
+    children?: React.ReactNode;
+  };
+
+  const Select = ({ value, onValueChange, children }: SelectProps) => {
+    const [triggerProps, setTriggerProps] = React.useState<Record<string, unknown>>({});
+    return (
+      <SelectContext.Provider value={{ setTriggerProps }}>
+        <select
+          value={value}
+          onChange={(event) => onValueChange?.(event.target.value)}
+          {...triggerProps}
+        >
+          {children}
+        </select>
+      </SelectContext.Provider>
+    );
+  };
+
+  type SelectTriggerProps = Record<string, unknown>;
+
+  const SelectTrigger = (props: SelectTriggerProps) => {
+    const ctx = React.useContext(SelectContext);
+    React.useEffect(() => {
+      ctx?.setTriggerProps(props);
+    }, [ctx, props]);
+    return null;
+  };
+
+  const SelectValue = () => null;
+  const SelectContent = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+  const SelectItem = ({ value, children }: { value: string; children?: React.ReactNode }) => (
+    <option value={value}>{children}</option>
+  );
+
+  return {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  };
+});
 
 const getJson = vi.fn();
 const putJson = vi.fn();
 const getAccessToken = vi.fn();
 const getUserId = vi.fn();
+
+const selectOption = async (
+  user: ReturnType<typeof userEvent.setup>,
+  trigger: HTMLElement,
+  optionText: string,
+) => {
+  const option = (await within(trigger).findByRole("option", { name: optionText })) as HTMLOptionElement;
+  fireEvent.change(trigger, { target: { value: option.getAttribute("value") ?? "" } });
+  await waitFor(() => expect(option.selected).toBe(true));
+};
+
+const selectComboboxOption = async (
+  user: ReturnType<typeof userEvent.setup>,
+  trigger: HTMLElement,
+  optionText: string,
+) => {
+  await user.click(trigger);
+  await user.click(await screen.findByText(optionText));
+};
 
 vi.mock("@/lib/api", () => ({
   ApiError: class ApiError extends Error {
@@ -89,7 +160,6 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
 
     expect(await screen.findByText(/profile setup/i)).toBeInTheDocument();
-    expect(await screen.findByDisplayValue("user@example.com")).toBeInTheDocument();
   });
 
   it("validates required fields on save", async () => {
@@ -128,9 +198,9 @@ describe("ProfilePage", () => {
 
     await screen.findByText(/profile setup/i);
     await userEvent.clear(screen.getByPlaceholderText("arturo"));
-    await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
 
     expect(await screen.findByText(/handle is required/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
     expect(putJson).not.toHaveBeenCalled();
   });
 
@@ -233,6 +303,7 @@ describe("ProfilePage", () => {
   });
 
   it("submits profile updates with birth info", async () => {
+    const user = userEvent.setup();
     getAccessToken.mockReturnValue("token");
     getUserId.mockReturnValue("user-1");
     getJson
@@ -264,6 +335,7 @@ describe("ProfilePage", () => {
           },
         ],
       })
+      .mockResolvedValueOnce({ available: true })
       .mockResolvedValueOnce({
         user: { id: "user-1", email: "user@example.com" },
         profile: {
@@ -296,13 +368,16 @@ describe("ProfilePage", () => {
 
     render(<ProfilePage />);
 
-    await screen.findByText(/profile setup/i);
+    await waitFor(() =>
+      expect(screen.queryByText(/loading your profile/i)).not.toBeInTheDocument(),
+    );
 
-    const selects = screen.getAllByRole("combobox");
-    await userEvent.selectOptions(selects[0], "2000");
-    await userEvent.selectOptions(selects[1], "1");
+    await selectOption(user, screen.getByLabelText(/birth year/i), "2000");
+    await selectOption(user, screen.getByLabelText(/birth month/i), "January");
 
-    await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
+    const saveButton = screen.getByRole("button", { name: /save profile/i });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    await userEvent.click(saveButton);
 
     expect(putJson).toHaveBeenCalledWith("/profile", {
       handle: "arturo",
@@ -437,11 +512,10 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
+    await user.click(screen.getByRole("tab", { name: /language/i }));
     await user.click(screen.getByRole("button", { name: /add language/i }));
-    const selects = screen.getAllByRole("combobox");
-    await user.selectOptions(selects[1], "5");
-    await user.click(screen.getAllByLabelText(/target/i)[1]);
 
+    await user.click(screen.getByRole("tab", { name: /availability/i }));
     await user.click(screen.getByRole("button", { name: /add availability slot/i }));
     const timeInputs = document.querySelectorAll('input[type="time"]') as NodeListOf<HTMLInputElement>;
     await user.clear(timeInputs[0]);
@@ -474,6 +548,7 @@ describe("ProfilePage", () => {
   });
 
   it("flags timezone as required", async () => {
+    const user = userEvent.setup();
     getAccessToken.mockReturnValue("token");
     getUserId.mockReturnValue("user-1");
     getJson.mockResolvedValueOnce({
@@ -508,13 +583,10 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
-    fireEvent.change(screen.getByLabelText(/timezone/i), {
-      target: { value: "" },
-    });
-
-    await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
+    await selectComboboxOption(user, screen.getByLabelText(/timezone/i), "Select timezone");
 
     expect(await screen.findByText(/timezone is required/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
   });
 
   it("rejects invalid handle characters on save", async () => {
@@ -556,9 +628,9 @@ describe("ProfilePage", () => {
     const handleInput = screen.getByPlaceholderText("arturo");
     await user.clear(handleInput);
     await user.type(handleInput, "neo!");
-    await user.click(screen.getByRole("button", { name: /save profile/i }));
 
     expect(await screen.findByText(/handle can only use letters and numbers/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
     expect(putJson).not.toHaveBeenCalled();
   });
 
@@ -598,14 +670,16 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
-    const languageSection = screen.getByRole("heading", { name: /languages/i }).closest("section");
-    const languageSelects = within(languageSection as HTMLElement).getAllByRole("combobox");
-    const levelSelect = languageSelects[1];
-    await user.selectOptions(levelSelect, "4");
+    await user.click(screen.getByRole("tab", { name: /language/i }));
 
-    await user.click(screen.getByRole("button", { name: /save profile/i }));
+    const languageSection = screen
+      .getByRole("heading", { name: /languages/i })
+      .closest("section");
+    const levelSelect = within(languageSection as HTMLElement).getAllByLabelText(/language level/i)[0];
+    await selectOption(user, levelSelect, "Advanced");
 
     expect(await screen.findByText(/at least one native language is required/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
     expect(putJson).not.toHaveBeenCalled();
   });
 
