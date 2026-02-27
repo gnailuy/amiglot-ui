@@ -247,7 +247,7 @@ export default function ProfilePage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const loading = hasAuth && !profileLoaded;
   const [message, setMessage] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const fieldErrors = profileLoaded ? validation.errors : {};
   const [activeTab, setActiveTab] = useState("profile");
 
   const [handle, setHandle] = useState("");
@@ -583,13 +583,6 @@ export default function ProfilePage() {
     !loading &&
     Object.keys(validation.errors).length === 0 &&
     effectiveHandleAvailability !== "unavailable";
-
-  useEffect(() => {
-    if (!profileLoaded) {
-      return;
-    }
-    setFieldErrors(validation.errors);
-  }, [validation.errors, profileLoaded]);
 
   const onSave = async () => {
     setMessage(null);

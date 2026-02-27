@@ -10,7 +10,13 @@ vi.mock("@/components/ui/select", () => {
     setTriggerProps: (props: Record<string, unknown>) => void;
   } | null>(null);
 
-  const Select = ({ value, onValueChange, children }: any) => {
+  type SelectProps = {
+    value?: string;
+    onValueChange?: (value: string) => void;
+    children?: React.ReactNode;
+  };
+
+  const Select = ({ value, onValueChange, children }: SelectProps) => {
     const [triggerProps, setTriggerProps] = React.useState<Record<string, unknown>>({});
     return (
       <SelectContext.Provider value={{ setTriggerProps }}>
@@ -25,7 +31,9 @@ vi.mock("@/components/ui/select", () => {
     );
   };
 
-  const SelectTrigger = (props: any) => {
+  type SelectTriggerProps = Record<string, unknown>;
+
+  const SelectTrigger = (props: SelectTriggerProps) => {
     const ctx = React.useContext(SelectContext);
     React.useEffect(() => {
       ctx?.setTriggerProps(props);
@@ -34,8 +42,10 @@ vi.mock("@/components/ui/select", () => {
   };
 
   const SelectValue = () => null;
-  const SelectContent = ({ children }: any) => <>{children}</>;
-  const SelectItem = ({ value, children }: any) => <option value={value}>{children}</option>;
+  const SelectContent = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+  const SelectItem = ({ value, children }: { value: string; children?: React.ReactNode }) => (
+    <option value={value}>{children}</option>
+  );
 
   return {
     Select,
