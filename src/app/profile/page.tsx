@@ -124,10 +124,21 @@ function buildOptions(values: string[], type: "language" | "region"): Option[] {
       ? navigator.language
       : "en";
   const display = new Intl.DisplayNames([locale], { type });
+  const resolveLabel = (value: string) => {
+    try {
+      return display.of(value) ?? value;
+    } catch {
+      try {
+        return display.of(value.replace(/_/g, "-")) ?? value;
+      } catch {
+        return value;
+      }
+    }
+  };
   return values
     .map((value) => ({
       value,
-      label: `${display.of(value) ?? value} (${value})`,
+      label: `${resolveLabel(value)} (${value})`,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
@@ -207,6 +218,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
 
+  const [email, setEmail] = useState("");
   const [handle, setHandle] = useState("");
   const [birthYear, setBirthYear] = useState(UNSET_SELECT_VALUE);
   const [birthMonth, setBirthMonth] = useState(UNSET_SELECT_VALUE);
@@ -301,7 +313,7 @@ export default function ProfilePage() {
     }
     const normalized = langs
       .map((code) => code.toLowerCase())
-      .filter((code) => code.length >= 2 && code.length <= 3);
+      .filter((code) => code.length >= 2 && code.length <= 15);
     return buildOptions(
       normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
       "language",
@@ -351,6 +363,7 @@ export default function ProfilePage() {
 
     getJson<ProfileResponse>("/profile")
       .then((data) => {
+        setEmail(data.user.email ?? "");
         setHandle(data.profile.handle ?? "");
         setBirthYear(data.profile.birth_year?.toString() ?? UNSET_SELECT_VALUE);
         setBirthMonth(data.profile.birth_month?.toString() ?? UNSET_SELECT_VALUE);
@@ -726,6 +739,15 @@ export default function ProfilePage() {
                           Handle must be 3–20 letters or numbers.
                         </p>
                       ) : null}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        readOnly
+                        value={email}
+                        className="bg-muted/40 text-muted-foreground focus-visible:border-border focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
                     </div>
                   </div>
 
@@ -1105,11 +1127,13 @@ export default function ProfilePage() {
             </Tabs>
           </CardContent>
           <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {profileTabInvalid || languageTabInvalid || availabilityTabInvalid ? (
-              <p className="text-xs text-muted-foreground">
-                Save is disabled until every tab is valid.
-              </p>
-            ) : null}
+            <div className="flex-1">
+              {profileTabInvalid || languageTabInvalid || availabilityTabInvalid ? (
+                <p className="text-xs text-muted-foreground">
+                  Save is disabled until every tab is valid.
+                </p>
+              ) : null}
+            </div>
             <Button
               className="sm:min-w-[160px]"
               type="button"
