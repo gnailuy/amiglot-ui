@@ -57,7 +57,6 @@ vi.mock("@/components/ui/select", () => {
 });
 
 vi.mock("@/components/ui/smart-select", () => {
-  const React = require("react");
   const SmartSelect = ({ id, value, options, onValueChange }: {
     id?: string;
     value: string;
