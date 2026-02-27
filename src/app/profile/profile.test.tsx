@@ -66,7 +66,7 @@ const selectOption = async (
   trigger: HTMLElement,
   optionText: string,
 ) => {
-  const option = await within(trigger).findByRole("option", { name: optionText });
+  const option = (await within(trigger).findByRole("option", { name: optionText })) as HTMLOptionElement;
   fireEvent.change(trigger, { target: { value: option.getAttribute("value") ?? "" } });
   await waitFor(() => expect(option.selected).toBe(true));
 };

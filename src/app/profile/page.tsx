@@ -247,7 +247,6 @@ export default function ProfilePage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const loading = hasAuth && !profileLoaded;
   const [message, setMessage] = useState<string | null>(null);
-  const fieldErrors = profileLoaded ? validation.errors : {};
   const [activeTab, setActiveTab] = useState("profile");
 
   const [handle, setHandle] = useState("");
@@ -569,6 +568,8 @@ export default function ProfilePage() {
       trimmedTimezone,
     };
   }, [handle, birthYear, birthMonth, timezone, languages, availability]);
+
+  const fieldErrors = profileLoaded ? validation.errors : {};
 
   const profileTabInvalid =
     Boolean(
