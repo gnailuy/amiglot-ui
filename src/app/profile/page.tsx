@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -17,10 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -76,21 +74,7 @@ type HandleCheckResponse = {
   available: boolean;
 };
 
-type Option = {
-  value: string;
-  label: string;
-};
-
-type ComboboxProps = {
-  id?: string;
-  value: string;
-  options: Option[];
-  onValueChange: (nextValue: string) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-  className?: string;
-};
+type Option = SelectOption;
 
 const PROFICIENCY_LABELS: Record<number, string> = {
   0: "Zero",
@@ -149,65 +133,6 @@ function buildTimezoneOptions(values: string[]): Option[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function Combobox({
-  id,
-  value,
-  options,
-  onValueChange,
-  placeholder = "Select an option",
-  searchPlaceholder = "Search",
-  emptyText = "No matches found.",
-  className,
-}: ComboboxProps) {
-  const [open, setOpen] = useState(false);
-  const selected = options.find((option) => option.value === value);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-        >
-          <span className="truncate">
-            {selected ? selected.label : placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandEmpty>{emptyText}</CommandEmpty>
-          <CommandGroup>
-            {options.map((option) => (
-              <CommandItem
-                key={option.value}
-                value={option.label}
-                onSelect={() => {
-                  onValueChange(option.value);
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    option.value === value ? "opacity-100" : "opacity-0",
-                  )}
-                />
-                {option.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 export default function ProfilePage() {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -220,6 +145,7 @@ export default function ProfilePage() {
 
   const [email, setEmail] = useState("");
   const [handle, setHandle] = useState("");
+  const [originalHandle, setOriginalHandle] = useState("");
   const [birthYear, setBirthYear] = useState(UNSET_SELECT_VALUE);
   const [birthMonth, setBirthMonth] = useState(UNSET_SELECT_VALUE);
   const [countryCode, setCountryCode] = useState("");
@@ -243,13 +169,25 @@ export default function ProfilePage() {
     }
     return "valid" as const;
   }, [handle]);
+  const handleChanged = useMemo(() => {
+    const trimmedHandle = handle.trim().replace(/^@+/, "");
+    const trimmedOriginal = originalHandle.trim().replace(/^@+/, "");
+    if (!trimmedOriginal) {
+      return false;
+    }
+    return trimmedHandle !== trimmedOriginal;
+  }, [handle, originalHandle]);
   const effectiveHandleAvailability:
     | "idle"
     | "checking"
     | "available"
     | "unavailable"
     | "invalid" =
-    handleValidity === "valid" ? handleAvailability : handleValidity;
+    handleValidity === "valid"
+      ? handleChanged
+        ? handleAvailability
+        : "idle"
+      : handleValidity;
 
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
@@ -277,6 +215,22 @@ export default function ProfilePage() {
     }
     return years;
   }, []);
+
+  const birthYearOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: UNSET_SELECT_VALUE, label: "Select year" },
+      ...yearOptions.map((year) => ({ value: year.toString(), label: year.toString() })),
+    ],
+    [yearOptions],
+  );
+
+  const birthMonthOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: UNSET_SELECT_VALUE, label: "Select month" },
+      ...MONTHS.map((month) => ({ value: month.value, label: month.label })),
+    ],
+    [],
+  );
 
   const countryOptions = useMemo(() => {
     const supportedValuesOf = (Intl as unknown as {
@@ -365,6 +319,7 @@ export default function ProfilePage() {
       .then((data) => {
         setEmail(data.user.email ?? "");
         setHandle(data.profile.handle ?? "");
+        setOriginalHandle(data.profile.handle ?? "");
         setBirthYear(data.profile.birth_year?.toString() ?? UNSET_SELECT_VALUE);
         setBirthMonth(data.profile.birth_month?.toString() ?? UNSET_SELECT_VALUE);
         setCountryCode(data.profile.country_code ?? "");
@@ -419,7 +374,7 @@ export default function ProfilePage() {
   }, [hasAuth, token, userId]);
 
   useEffect(() => {
-    if (!hasAuth || handleValidity !== "valid") {
+    if (!hasAuth || handleValidity !== "valid" || !handleChanged) {
       return;
     }
     const trimmedHandle = handle.trim().replace(/^@+/, "");
@@ -441,7 +396,7 @@ export default function ProfilePage() {
     }, 500);
 
     return () => window.clearTimeout(timeout);
-  }, [handle, hasAuth, handleValidity]);
+  }, [handle, hasAuth, handleValidity, handleChanged, originalHandle]);
 
   const validation = useMemo(() => {
     const nextErrors: Record<string, string> = {};
@@ -726,7 +681,9 @@ export default function ProfilePage() {
                       {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
                         <p className="text-xs text-muted-foreground">Checking availability…</p>
                       ) : null}
-                      {!fieldErrors.handle && effectiveHandleAvailability === "available" ? (
+                      {!fieldErrors.handle &&
+                      handleChanged &&
+                      effectiveHandleAvailability === "available" ? (
                         <p className="text-xs text-emerald-600 dark:text-emerald-300">
                           Handle is available.
                         </p>
@@ -753,45 +710,32 @@ export default function ProfilePage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Birth year</Label>
-                      <Select value={birthYear} onValueChange={setBirthYear}>
-                        <SelectTrigger
-                          aria-label="Birth year"
-                          className={cn(fieldErrors.birthYear ? "border-destructive" : "")}
-                        >
-                          <SelectValue placeholder="Select year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNSET_SELECT_VALUE}>Select year</SelectItem>
-                          {yearOptions.map((year) => (
-                            <SelectItem key={year} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="birth-year">Birth year</Label>
+                      <SmartSelect
+                        id="birth-year"
+                        value={birthYear}
+                        options={birthYearOptions}
+                        onValueChange={setBirthYear}
+                        placeholder="Select year"
+                        searchPlaceholder="Search years"
+                        searchAriaLabel="Search years"
+                        className={cn(fieldErrors.birthYear ? "border-destructive" : "")}
+                      />
                       {fieldErrors.birthYear ? (
                         <p className="text-xs text-destructive">{fieldErrors.birthYear}</p>
                       ) : null}
                     </div>
                     <div className="space-y-2">
-                      <Label>Birth month</Label>
-                      <Select value={birthMonth} onValueChange={setBirthMonth}>
-                        <SelectTrigger
-                          aria-label="Birth month"
-                          className={cn(fieldErrors.birthMonth ? "border-destructive" : "")}
-                        >
-                          <SelectValue placeholder="Select month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNSET_SELECT_VALUE}>Select month</SelectItem>
-                          {MONTHS.map((month) => (
-                            <SelectItem key={month.value} value={month.value}>
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="birth-month">Birth month</Label>
+                      <SmartSelect
+                        id="birth-month"
+                        value={birthMonth}
+                        options={birthMonthOptions}
+                        onValueChange={setBirthMonth}
+                        placeholder="Select month"
+                        longListThreshold={13}
+                        className={cn(fieldErrors.birthMonth ? "border-destructive" : "")}
+                      />
                       {fieldErrors.birthMonth ? (
                         <p className="text-xs text-destructive">{fieldErrors.birthMonth}</p>
                       ) : null}
@@ -801,7 +745,7 @@ export default function ProfilePage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
-                      <Combobox
+                      <SmartSelect
                         id="country"
                         value={countryCode}
                         options={countryOptions}
@@ -814,7 +758,7 @@ export default function ProfilePage() {
                       <Label htmlFor="timezone">
                         Timezone <span className="text-destructive">*</span>
                       </Label>
-                      <Combobox
+                      <SmartSelect
                         id="timezone"
                         value={timezone}
                         options={[{ value: "", label: "Select timezone" }, ...timezoneOptions]}
@@ -858,7 +802,7 @@ export default function ProfilePage() {
                         <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                           <div className="space-y-2">
                             <Label>Language</Label>
-                            <Combobox
+                            <SmartSelect
                               value={language.language_code}
                               options={languageOptions}
                               onValueChange={(nextValue) => {
@@ -1063,7 +1007,7 @@ export default function ProfilePage() {
                             </div>
                             <div className="space-y-2">
                               <Label>Timezone</Label>
-                              <Select
+                              <SmartSelect
                                 value={slot.timezone || "profile"}
                                 onValueChange={(value) => {
                                   const next = [...availability];
@@ -1073,19 +1017,13 @@ export default function ProfilePage() {
                                   };
                                   setAvailability(next);
                                 }}
-                              >
-                                <SelectTrigger aria-label="Availability timezone">
-                                  <SelectValue placeholder="Use profile timezone" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="profile">Use profile timezone</SelectItem>
-                                  {timezoneOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                options={[
+                                  { value: "profile", label: "Use profile timezone" },
+                                  ...timezoneOptions,
+                                ]}
+                                placeholder="Use profile timezone"
+                                searchPlaceholder="Search timezones"
+                              />
                             </div>
                             <div className="flex items-end">
                               <Button

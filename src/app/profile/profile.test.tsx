@@ -56,6 +56,28 @@ vi.mock("@/components/ui/select", () => {
   };
 });
 
+vi.mock("@/components/ui/smart-select", () => {
+  const SmartSelect = ({ id, value, options, onValueChange }: {
+    id?: string;
+    value: string;
+    options: { value: string; label: string }[];
+    onValueChange?: (value: string) => void;
+  }) => (
+    <select id={id} value={value} onChange={(event) => onValueChange?.(event.target.value)}>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+
+  return {
+    SmartSelect,
+    SelectOption: {},
+  };
+});
+
 const getJson = vi.fn();
 const putJson = vi.fn();
 const getAccessToken = vi.fn();
@@ -76,6 +98,12 @@ const selectComboboxOption = async (
   trigger: HTMLElement,
   optionText: string,
 ) => {
+  if (trigger instanceof HTMLSelectElement) {
+    const option = (await within(trigger).findByRole("option", { name: optionText })) as HTMLOptionElement;
+    fireEvent.change(trigger, { target: { value: option.getAttribute("value") ?? "" } });
+    await waitFor(() => expect(option.selected).toBe(true));
+    return;
+  }
   await user.click(trigger);
   await user.click(await screen.findByText(optionText));
 };
@@ -335,7 +363,6 @@ describe("ProfilePage", () => {
           },
         ],
       })
-      .mockResolvedValueOnce({ available: true })
       .mockResolvedValueOnce({
         user: { id: "user-1", email: "user@example.com" },
         profile: {
