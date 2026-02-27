@@ -127,10 +127,58 @@ function buildOptions(values: string[], type: "language" | "region"): Option[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+function buildLanguageOptions(values: string[]): Option[] {
+  const locale =
+    typeof navigator !== "undefined" && navigator.language
+      ? navigator.language
+      : "en";
+  const display = new Intl.DisplayNames([locale], { type: "language" });
+  const resolveLabel = (value: string) => {
+    try {
+      return display.of(value);
+    } catch {
+      try {
+        return display.of(value.replace(/_/g, "-"));
+      } catch {
+        return undefined;
+      }
+    }
+  };
+  return values
+    .map((value) => {
+      const label = resolveLabel(value);
+      if (!label) {
+        return null;
+      }
+      const normalizedValue = value.replace(/_/g, "-").toLowerCase();
+      const normalizedLabel = label.toLowerCase();
+      if (
+        normalizedLabel === value.toLowerCase() ||
+        normalizedLabel === normalizedValue
+      ) {
+        return null;
+      }
+      return { value, label: `${label} (${value})` };
+    })
+    .filter((option): option is Option => Boolean(option))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function buildTimezoneOptions(values: string[]): Option[] {
   return values
     .map((value) => ({ value, label: value }))
     .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function getBrowserTimezone() {
+  if (typeof Intl === "undefined" || typeof Intl.DateTimeFormat !== "function") {
+    return "America/Vancouver";
+  }
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Vancouver";
+  } catch {
+    return "America/Vancouver";
+  }
 }
 
 export default function ProfilePage() {
@@ -149,7 +197,7 @@ export default function ProfilePage() {
   const [birthYear, setBirthYear] = useState(UNSET_SELECT_VALUE);
   const [birthMonth, setBirthMonth] = useState(UNSET_SELECT_VALUE);
   const [countryCode, setCountryCode] = useState("");
-  const [timezone, setTimezone] = useState("America/Vancouver");
+  const [timezone, setTimezone] = useState(() => getBrowserTimezone());
   const [discoverable, setDiscoverable] = useState<boolean | null>(null);
 
   const [handleAvailability, setHandleAvailability] = useState<
@@ -192,7 +240,7 @@ export default function ProfilePage() {
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
       language_code: "en",
-      level: 0,
+      level: 5,
       is_native: true,
       is_target: false,
       description: "",
@@ -254,23 +302,11 @@ export default function ProfilePage() {
   }, []);
 
   const languageOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as {
-      supportedValuesOf?: (key: string) => string[];
-    }).supportedValuesOf;
-    let langs = DEFAULT_LANGUAGE_CODES;
-    if (typeof supportedValuesOf === "function") {
-      try {
-        langs = supportedValuesOf("language");
-      } catch {
-        langs = DEFAULT_LANGUAGE_CODES;
-      }
-    }
-    const normalized = langs
+    const normalized = DEFAULT_LANGUAGE_CODES
       .map((code) => code.toLowerCase())
       .filter((code) => code.length >= 2 && code.length <= 15);
-    return buildOptions(
+    return buildLanguageOptions(
       normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
-      "language",
     );
   }, []);
 
@@ -323,7 +359,8 @@ export default function ProfilePage() {
         setBirthYear(data.profile.birth_year?.toString() ?? UNSET_SELECT_VALUE);
         setBirthMonth(data.profile.birth_month?.toString() ?? UNSET_SELECT_VALUE);
         setCountryCode(data.profile.country_code ?? "");
-        setTimezone(data.profile.timezone ?? "America/Vancouver");
+        const resolvedTimezone = data.profile.timezone?.trim() || getBrowserTimezone();
+        setTimezone(resolvedTimezone);
         setDiscoverable(data.profile.discoverable ?? null);
         setLanguages(
           data.languages.length
@@ -331,30 +368,47 @@ export default function ProfilePage() {
             : [
                 {
                   language_code: "en",
-                  level: 0,
+                  level: 5,
                   is_native: true,
                   is_target: false,
                   description: "",
                 },
               ],
         );
-        setAvailability(
-          data.availability.length
-            ? data.availability.map((slot) => ({
-                weekdays: [slot.weekday],
-                start_local_time: slot.start_local_time,
-                end_local_time: slot.end_local_time,
-                timezone: slot.timezone,
-              }))
-            : [
-                {
-                  weekdays: [1],
-                  start_local_time: "18:00",
-                  end_local_time: "20:00",
-                  timezone: "",
-                },
-              ],
-        );
+        const normalizedAvailability = data.availability.length
+          ? (() => {
+              const grouped = new Map<string, AvailabilityDraft>();
+              data.availability.forEach((slot) => {
+                const tz = slot.timezone?.trim() || resolvedTimezone;
+                const key = `${slot.start_local_time}|${slot.end_local_time}|${tz}`;
+                const existing = grouped.get(key);
+                if (existing) {
+                  if (!existing.weekdays.includes(slot.weekday)) {
+                    existing.weekdays.push(slot.weekday);
+                  }
+                  return;
+                }
+                grouped.set(key, {
+                  weekdays: [slot.weekday],
+                  start_local_time: slot.start_local_time,
+                  end_local_time: slot.end_local_time,
+                  timezone: tz,
+                });
+              });
+              return Array.from(grouped.values()).map((slot) => ({
+                ...slot,
+                weekdays: [...slot.weekdays].sort(),
+              }));
+            })()
+          : [
+              {
+                weekdays: [1],
+                start_local_time: "18:00",
+                end_local_time: "20:00",
+                timezone: resolvedTimezone,
+              },
+            ];
+        setAvailability(normalizedAvailability);
         setMessage(null);
       })
       .catch((error) => {
@@ -1008,20 +1062,17 @@ export default function ProfilePage() {
                             <div className="space-y-2">
                               <Label>Timezone</Label>
                               <SmartSelect
-                                value={slot.timezone || "profile"}
+                                value={slot.timezone || timezone}
                                 onValueChange={(value) => {
                                   const next = [...availability];
                                   next[index] = {
                                     ...slot,
-                                    timezone: value === "profile" ? "" : value,
+                                    timezone: value,
                                   };
                                   setAvailability(next);
                                 }}
-                                options={[
-                                  { value: "profile", label: "Use profile timezone" },
-                                  ...timezoneOptions,
-                                ]}
-                                placeholder="Use profile timezone"
+                                options={timezoneOptions}
+                                placeholder="Select timezone"
                                 searchPlaceholder="Search timezones"
                               />
                             </div>
@@ -1052,7 +1103,7 @@ export default function ProfilePage() {
                           weekdays: [1],
                           start_local_time: "18:00",
                           end_local_time: "20:00",
-                          timezone: "",
+                          timezone: timezone,
                         },
                       ])
                     }
