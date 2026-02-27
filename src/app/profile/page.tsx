@@ -2,9 +2,33 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import styles from "./page.module.css";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type ProfilePayload = {
   handle: string;
@@ -56,6 +80,16 @@ type Option = {
   label: string;
 };
 
+type ComboboxProps = {
+  value: string;
+  options: Option[];
+  onValueChange: (nextValue: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyText?: string;
+  className?: string;
+};
+
 const PROFICIENCY_LABELS: Record<number, string> = {
   0: "Zero",
   1: "Beginner",
@@ -69,6 +103,7 @@ const HANDLE_PATTERN = /^[a-zA-Z0-9]+$/;
 const HANDLE_MIN_LENGTH = 3;
 const HANDLE_MAX_LENGTH = 20;
 const BIRTH_YEAR_MIN = 1900;
+const UNSET_SELECT_VALUE = "__unset__";
 
 const WEEKDAYS = [
   "Sunday",
@@ -126,6 +161,7 @@ const DEFAULT_LANGUAGE_CODES = [
   "ar",
 ];
 
+
 function buildOptions(values: string[], type: "language" | "region"): Option[] {
   const locale =
     typeof navigator !== "undefined" && navigator.language
@@ -146,6 +182,63 @@ function buildTimezoneOptions(values: string[]): Option[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+function Combobox({
+  value,
+  options,
+  onValueChange,
+  placeholder = "Select an option",
+  searchPlaceholder = "Search",
+  emptyText = "No matches found.",
+  className,
+}: ComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("w-full justify-between", className)}
+        >
+          <span className="truncate">
+            {selected ? selected.label : placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandEmpty>{emptyText}</CommandEmpty>
+          <CommandGroup>
+            {options.map((option) => (
+              <CommandItem
+                key={option.value}
+                value={option.label}
+                onSelect={() => {
+                  onValueChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    option.value === value ? "opacity-100" : "opacity-0",
+                  )}
+                />
+                {option.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function ProfilePage() {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -155,10 +248,11 @@ export default function ProfilePage() {
   const loading = hasAuth && !profileLoaded;
   const [message, setMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState("profile");
 
   const [handle, setHandle] = useState("");
-  const [birthYear, setBirthYear] = useState("");
-  const [birthMonth, setBirthMonth] = useState("");
+  const [birthYear, setBirthYear] = useState(UNSET_SELECT_VALUE);
+  const [birthMonth, setBirthMonth] = useState(UNSET_SELECT_VALUE);
   const [countryCode, setCountryCode] = useState("");
   const [timezone, setTimezone] = useState("America/Vancouver");
   const [discoverable, setDiscoverable] = useState<boolean | null>(null);
@@ -181,7 +275,12 @@ export default function ProfilePage() {
     }
     return "valid" as const;
   }, [handle]);
-  const effectiveHandleAvailability: "idle" | "checking" | "available" | "unavailable" | "invalid" =
+  const effectiveHandleAvailability:
+    | "idle"
+    | "checking"
+    | "available"
+    | "unavailable"
+    | "invalid" =
     handleValidity === "valid" ? handleAvailability : handleValidity;
 
   const [languages, setLanguages] = useState<LanguagePayload[]>([
@@ -212,7 +311,9 @@ export default function ProfilePage() {
   }, []);
 
   const countryOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+    const supportedValuesOf = (Intl as unknown as {
+      supportedValuesOf?: (key: string) => string[];
+    }).supportedValuesOf;
     let regions = DEFAULT_COUNTRY_CODES;
     if (typeof supportedValuesOf === "function") {
       try {
@@ -231,16 +332,18 @@ export default function ProfilePage() {
   }, []);
 
   const languageOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
-    let languages = DEFAULT_LANGUAGE_CODES;
+    const supportedValuesOf = (Intl as unknown as {
+      supportedValuesOf?: (key: string) => string[];
+    }).supportedValuesOf;
+    let langs = DEFAULT_LANGUAGE_CODES;
     if (typeof supportedValuesOf === "function") {
       try {
-        languages = supportedValuesOf("language");
+        langs = supportedValuesOf("language");
       } catch {
-        languages = DEFAULT_LANGUAGE_CODES;
+        langs = DEFAULT_LANGUAGE_CODES;
       }
     }
-    const normalized = languages
+    const normalized = langs
       .map((code) => code.toLowerCase())
       .filter((code) => code.length >= 2 && code.length <= 3);
     return buildOptions(
@@ -250,13 +353,25 @@ export default function ProfilePage() {
   }, []);
 
   const timezoneOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
-    let timezones = ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+    const supportedValuesOf = (Intl as unknown as {
+      supportedValuesOf?: (key: string) => string[];
+    }).supportedValuesOf;
+    let timezones = [
+      "America/Vancouver",
+      "UTC",
+      "America/New_York",
+      "Europe/London",
+    ];
     if (typeof supportedValuesOf === "function") {
       try {
         timezones = supportedValuesOf("timeZone");
       } catch {
-        timezones = ["America/Vancouver", "UTC", "America/New_York", "Europe/London"];
+        timezones = [
+          "America/Vancouver",
+          "UTC",
+          "America/New_York",
+          "Europe/London",
+        ];
       }
     }
     return buildTimezoneOptions(timezones);
@@ -281,8 +396,8 @@ export default function ProfilePage() {
     getJson<ProfileResponse>("/profile")
       .then((data) => {
         setHandle(data.profile.handle ?? "");
-        setBirthYear(data.profile.birth_year?.toString() ?? "");
-        setBirthMonth(data.profile.birth_month?.toString() ?? "");
+        setBirthYear(data.profile.birth_year?.toString() ?? UNSET_SELECT_VALUE);
+        setBirthMonth(data.profile.birth_month?.toString() ?? UNSET_SELECT_VALUE);
         setCountryCode(data.profile.country_code ?? "");
         setTimezone(data.profile.timezone ?? "America/Vancouver");
         setDiscoverable(data.profile.discoverable ?? null);
@@ -360,8 +475,7 @@ export default function ProfilePage() {
     return () => window.clearTimeout(timeout);
   }, [handle, hasAuth, handleValidity]);
 
-  const onSave = async () => {
-    setMessage(null);
+  const validation = useMemo(() => {
     const nextErrors: Record<string, string> = {};
 
     const trimmedHandle = handle.trim().replace(/^@+/, "");
@@ -381,7 +495,7 @@ export default function ProfilePage() {
       nextErrors.timezone = "Timezone is required.";
     }
 
-    if (birthYear) {
+    if (birthYear !== UNSET_SELECT_VALUE) {
       const year = Number(birthYear);
       const currentYear = new Date().getFullYear();
       if (Number.isNaN(year) || year < BIRTH_YEAR_MIN || year > currentYear) {
@@ -389,7 +503,7 @@ export default function ProfilePage() {
       }
     }
 
-    if (birthMonth) {
+    if (birthMonth !== UNSET_SELECT_VALUE) {
       const month = Number(birthMonth);
       if (Number.isNaN(month) || month < 1 || month > 12) {
         nextErrors.birthMonth = "Birth month must be between 1 and 12.";
@@ -431,36 +545,75 @@ export default function ProfilePage() {
       nextErrors.languages = "At least one native language is required.";
     }
 
-    setFieldErrors(nextErrors);
-    if (Object.keys(nextErrors).length) {
+    if (availability.some((slot) => slot.weekdays.length === 0)) {
+      nextErrors.availability = "Select at least one weekday for each slot.";
+    }
+    if (availability.some((slot) => !slot.start_local_time || !slot.end_local_time)) {
+      nextErrors.availability = "Set a start and end time for each slot.";
+    }
+
+    const expandedAvailability = availability.flatMap((slot) =>
+      slot.weekdays.map((weekday) => ({
+        weekday,
+        start_local_time: slot.start_local_time,
+        end_local_time: slot.end_local_time,
+        timezone: slot.timezone || trimmedTimezone,
+      })),
+    );
+
+    return {
+      errors: nextErrors,
+      cleanedLanguages,
+      expandedAvailability,
+      trimmedHandle,
+      trimmedTimezone,
+    };
+  }, [handle, birthYear, birthMonth, timezone, languages, availability]);
+
+  const profileTabInvalid =
+    Boolean(
+      validation.errors.handle ||
+        validation.errors.timezone ||
+        validation.errors.birthYear ||
+        validation.errors.birthMonth,
+    ) || effectiveHandleAvailability === "unavailable";
+  const languageTabInvalid = Boolean(validation.errors.languages);
+  const availabilityTabInvalid = Boolean(validation.errors.availability);
+  const canSave =
+    !loading &&
+    Object.keys(validation.errors).length === 0 &&
+    effectiveHandleAvailability !== "unavailable";
+
+  useEffect(() => {
+    if (!profileLoaded) {
+      return;
+    }
+    setFieldErrors(validation.errors);
+  }, [validation.errors, profileLoaded]);
+
+  const onSave = async () => {
+    setMessage(null);
+
+    if (!canSave) {
       setMessage("Please fix the highlighted fields.");
       return;
     }
 
     try {
       await putJson<ProfileResponse>("/profile", {
-        handle: trimmedHandle,
-        birth_year: birthYear ? Number(birthYear) : null,
-        birth_month: birthMonth ? Number(birthMonth) : null,
+        handle: validation.trimmedHandle,
+        birth_year: birthYear !== UNSET_SELECT_VALUE ? Number(birthYear) : null,
+        birth_month: birthMonth !== UNSET_SELECT_VALUE ? Number(birthMonth) : null,
         country_code: countryCode || null,
-        timezone: trimmedTimezone,
+        timezone: validation.trimmedTimezone,
       });
 
       await putJson("/profile/languages", {
-        languages: cleanedLanguages,
+        languages: validation.cleanedLanguages,
       });
 
-      const expandedAvailability = availability.flatMap((slot) =>
-        slot.weekdays.map((weekday) => ({
-          weekday,
-          start_local_time: slot.start_local_time,
-          end_local_time: slot.end_local_time,
-          timezone: slot.timezone || trimmedTimezone,
-        })),
-      );
-
       await putJson("/profile/availability", {
-        availability: expandedAvailability,
+        availability: validation.expandedAvailability,
       });
 
       const refreshed = await getJson<ProfileResponse>("/profile");
@@ -475,387 +628,561 @@ export default function ProfilePage() {
 
   if (!isMounted) {
     return (
-      <div className={styles.page}>
-        <main className={styles.card}>
-          <h1>Profile setup</h1>
-          <p>Loading your session...</p>
-        </main>
+      <div className="min-h-screen bg-background px-4 py-12 text-foreground">
+        <div className="mx-auto w-full max-w-4xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile setup</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Loading your session...</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (!token || !userId) {
     return (
-      <div className={styles.page}>
-        <main className={styles.card}>
-          <h1>Profile setup</h1>
-          <p>You need to sign in before setting up your profile.</p>
-          <Link className={styles.primary} href="/login">
-            Sign in with magic link
-          </Link>
-        </main>
+      <div className="min-h-screen bg-background px-4 py-12 text-foreground">
+        <div className="mx-auto w-full max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile setup</CardTitle>
+              <CardDescription>
+                You need to sign in before setting up your profile.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link href="/login">Sign in with magic link</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.page}>
-      <main className={styles.card}>
-        <div className={styles.header}>
-          <div>
-            <h1>Profile setup</h1>
-            <p className={styles.subtitle}>
-              Tell us about your languages and availability.
-            </p>
-          </div>
-          <Link className={styles.secondary} href="/">
-            Back home
-          </Link>
-        </div>
-
-        {loading ? <p>Loading your profile…</p> : null}
-        {discoverable !== null ? (
-          <p className={styles.discoverable}>
-            Discoverable status: {discoverable ? "Enabled" : "Not yet"}
-          </p>
-        ) : null}
-        {message ? <p className={styles.message}>{message}</p> : null}
-
-        <section className={styles.section}>
-          <h2>Profile</h2>
-          <label className={styles.label}>
-            Handle (no @) <span className={styles.required}>*</span>
-            <input
-              className={`${styles.input} ${
-                fieldErrors.handle ? styles.inputError : ""
-              }`}
-              value={handle}
-              onChange={(event) =>
-                setHandle(event.target.value.replace(/^@+/, ""))
-              }
-              placeholder="arturo"
-            />
-            {fieldErrors.handle ? (
-              <span className={styles.helper}>{fieldErrors.handle}</span>
-            ) : null}
-            {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
-              <span className={styles.helper}>Checking availability…</span>
-            ) : null}
-            {!fieldErrors.handle && effectiveHandleAvailability === "available" ? (
-              <span className={styles.helperSuccess}>Handle is available.</span>
-            ) : null}
-            {!fieldErrors.handle && effectiveHandleAvailability === "unavailable" ? (
-              <span className={styles.helperError}>Handle is taken.</span>
-            ) : null}
-            {!fieldErrors.handle && effectiveHandleAvailability === "invalid" ? (
-              <span className={styles.helperError}>
-                Handle must be 3–20 letters or numbers.
-              </span>
-            ) : null}
-          </label>
-          <label className={styles.label}>
-            Email (read-only)
-            <input className={styles.input} value={email} readOnly />
-          </label>
-          <div className={styles.grid}>
-            <label className={styles.label}>
-              Birth year
-              <select
-                className={`${styles.select} ${
-                  fieldErrors.birthYear ? styles.inputError : ""
-                }`}
-                value={birthYear}
-                onChange={(event) => setBirthYear(event.target.value)}
-              >
-                <option value="">Select year</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.birthYear ? (
-                <span className={styles.helper}>{fieldErrors.birthYear}</span>
-              ) : null}
-            </label>
-            <label className={styles.label}>
-              Birth month
-              <select
-                className={`${styles.select} ${
-                  fieldErrors.birthMonth ? styles.inputError : ""
-                }`}
-                value={birthMonth}
-                onChange={(event) => setBirthMonth(event.target.value)}
-              >
-                <option value="">Select month</option>
-                {MONTHS.map((month) => (
-                  <option key={month.value} value={month.value}>
-                    {month.label}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.birthMonth ? (
-                <span className={styles.helper}>{fieldErrors.birthMonth}</span>
-              ) : null}
-            </label>
-          </div>
-          <div className={styles.grid}>
-            <label className={styles.label}>
-              Country
-              <select
-                className={styles.select}
-                value={countryCode}
-                onChange={(event) => setCountryCode(event.target.value)}
-              >
-                <option value="">Select country</option>
-                {countryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={styles.label}>
-              Timezone <span className={styles.required}>*</span>
-              <select
-                className={`${styles.select} ${
-                  fieldErrors.timezone ? styles.inputError : ""
-                }`}
-                value={timezone}
-                onChange={(event) => setTimezone(event.target.value)}
-              >
-                {timezoneOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.timezone ? (
-                <span className={styles.helper}>{fieldErrors.timezone}</span>
-              ) : null}
-            </label>
-          </div>
-        </section>
-
-        <section className={styles.section}>
-          <h2>
-            Languages <span className={styles.required}>*</span>
-          </h2>
-          {fieldErrors.languages ? (
-            <p className={styles.helperError}>{fieldErrors.languages}</p>
-          ) : null}
-          {languages.map((language, index) => (
-            <div key={`lang-${index}`} className={styles.row}>
-              <select
-                className={styles.select}
-                value={language.language_code}
-                onChange={(event) => {
-                  const next = [...languages];
-                  next[index] = {
-                    ...language,
-                    language_code: event.target.value,
-                  };
-                  setLanguages(next);
-                }}
-              >
-                {languageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={styles.select}
-                value={language.level}
-                onChange={(event) => {
-                  const next = [...languages];
-                  const nextLevel = Number(event.target.value);
-                  const isNative = nextLevel === 5;
-                  next[index] = {
-                    ...language,
-                    level: nextLevel,
-                    is_native: isNative,
-                    is_target: isNative ? false : language.is_target,
-                  };
-                  setLanguages(next);
-                }}
-              >
-                {Object.entries(PROFICIENCY_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <label className={styles.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={language.is_target}
-                  onChange={(event) => {
-                    const next = [...languages];
-                    const isTarget = event.target.checked;
-                    const nextLevel =
-                      isTarget && language.level === 5 ? 4 : language.level;
-                    next[index] = {
-                      ...language,
-                      level: nextLevel,
-                      is_native: nextLevel === 5,
-                      is_target: isTarget,
-                    };
-                    setLanguages(next);
-                  }}
-                />
-                Target
-              </label>
-              <input
-                className={styles.input}
-                value={language.description ?? ""}
-                onChange={(event) => {
-                  const next = [...languages];
-                  next[index] = { ...language, description: event.target.value };
-                  setLanguages(next);
-                }}
-                placeholder="Short description (optional)"
-              />
-              <button
-                className={styles.inlineButton}
-                type="button"
-                onClick={() => {
-                  const next = languages.filter((_, idx) => idx !== index);
-                  setLanguages(next.length ? next : languages);
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <button
-            className={styles.secondary}
-            type="button"
-            onClick={() =>
-              setLanguages([
-                ...languages,
-                {
-                  language_code: "en",
-                  level: 0,
-                  is_native: false,
-                  is_target: false,
-                  description: "",
-                },
-              ])
-            }
-          >
-            Add language
-          </button>
-        </section>
-
-        <section className={styles.section}>
-          <h2>Availability</h2>
-          {availability.map((slot, index) => (
-            <div key={`slot-${index}`} className={styles.row}>
-              <div className={styles.weekdayGroup}>
-                {WEEKDAYS.map((label, value) => (
-                  <label key={label} className={styles.weekdayItem}>
-                    <input
-                      type="checkbox"
-                      checked={slot.weekdays.includes(value)}
-                      onChange={(event) => {
-                        const next = [...availability];
-                        const weekdays = new Set(next[index].weekdays);
-                        if (event.target.checked) {
-                          weekdays.add(value);
-                        } else {
-                          weekdays.delete(value);
-                        }
-                        next[index] = {
-                          ...slot,
-                          weekdays: Array.from(weekdays).sort(),
-                        };
-                        setAvailability(next);
-                      }}
-                    />
-                    {label.slice(0, 3)}
-                  </label>
-                ))}
+    <div className="min-h-screen bg-background px-4 py-12 text-foreground">
+      <div className="mx-auto w-full max-w-4xl">
+        <Card className="border-muted/60 shadow-sm">
+          <CardHeader className="space-y-2">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-2xl">Profile setup</CardTitle>
+                <CardDescription>
+                  Tell us about your languages and availability.
+                </CardDescription>
               </div>
-              <input
-                className={styles.input}
-                type="time"
-                value={slot.start_local_time}
-                onChange={(event) => {
-                  const next = [...availability];
-                  next[index] = {
-                    ...slot,
-                    start_local_time: event.target.value,
-                  };
-                  setAvailability(next);
-                }}
-              />
-              <input
-                className={styles.input}
-                type="time"
-                value={slot.end_local_time}
-                onChange={(event) => {
-                  const next = [...availability];
-                  next[index] = {
-                    ...slot,
-                    end_local_time: event.target.value,
-                  };
-                  setAvailability(next);
-                }}
-              />
-              <select
-                className={styles.select}
-                value={slot.timezone || timezone}
-                onChange={(event) => {
-                  const next = [...availability];
-                  next[index] = {
-                    ...slot,
-                    timezone: event.target.value,
-                  };
-                  setAvailability(next);
-                }}
-              >
-                {timezoneOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                className={styles.inlineButton}
-                type="button"
-                onClick={() => {
-                  const next = availability.filter((_, idx) => idx !== index);
-                  setAvailability(next.length ? next : availability);
-                }}
-              >
-                Remove
-              </button>
+              <Button asChild variant="ghost">
+                <Link href="/">Back home</Link>
+              </Button>
             </div>
-          ))}
-          <button
-            className={styles.secondary}
-            type="button"
-            onClick={() =>
-              setAvailability([
-                ...availability,
-                {
-                  weekdays: [1],
-                  start_local_time: "18:00",
-                  end_local_time: "20:00",
-                  timezone: "",
-                },
-              ])
-            }
-          >
-            Add availability slot
-          </button>
-        </section>
+            {loading ? <p className="text-sm text-muted-foreground">Loading your profile…</p> : null}
+            {discoverable !== null ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Discoverable status:</span>
+                <Badge variant={discoverable ? "default" : "secondary"}>
+                  {discoverable ? "Enabled" : "Not yet"}
+                </Badge>
+              </div>
+            ) : null}
+            {message ? (
+              <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+                {message}
+              </div>
+            ) : null}
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="profile" className="flex items-center justify-center gap-2">
+                  Profile
+                  {profileTabInvalid ? (
+                    <Badge variant="destructive" className="hidden sm:inline-flex">
+                      Fix
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+                <TabsTrigger value="language" className="flex items-center justify-center gap-2">
+                  Language
+                  {languageTabInvalid ? (
+                    <Badge variant="destructive" className="hidden sm:inline-flex">
+                      Fix
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+                <TabsTrigger value="availability" className="flex items-center justify-center gap-2">
+                  Availability
+                  {availabilityTabInvalid ? (
+                    <Badge variant="destructive" className="hidden sm:inline-flex">
+                      Fix
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+              </TabsList>
 
-        <button className={styles.primary} type="button" onClick={onSave}>
-          Save profile
-        </button>
-      </main>
+              <TabsContent value="profile" className="mt-6 space-y-6">
+                <section className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Profile</h2>
+                    <p className="text-sm text-muted-foreground">
+                      This helps us personalize your matches and schedule.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="handle">
+                        Handle (no @) <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="handle"
+                        value={handle}
+                        onChange={(event) =>
+                          setHandle(event.target.value.replace(/^@+/, ""))
+                        }
+                        placeholder="arturo"
+                        className={cn(fieldErrors.handle ? "border-destructive" : "")}
+                      />
+                      {fieldErrors.handle ? (
+                        <p className="text-xs text-destructive">{fieldErrors.handle}</p>
+                      ) : null}
+                      {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
+                        <p className="text-xs text-muted-foreground">Checking availability…</p>
+                      ) : null}
+                      {!fieldErrors.handle && effectiveHandleAvailability === "available" ? (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-300">
+                          Handle is available.
+                        </p>
+                      ) : null}
+                      {!fieldErrors.handle && effectiveHandleAvailability === "unavailable" ? (
+                        <p className="text-xs text-destructive">Handle is taken.</p>
+                      ) : null}
+                      {!fieldErrors.handle && effectiveHandleAvailability === "invalid" ? (
+                        <p className="text-xs text-destructive">
+                          Handle must be 3–20 letters or numbers.
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email (read-only)</Label>
+                      <Input id="email" value={email} readOnly />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Birth year</Label>
+                      <Select value={birthYear} onValueChange={setBirthYear}>
+                        <SelectTrigger
+                          aria-label="Birth year"
+                          className={cn(fieldErrors.birthYear ? "border-destructive" : "")}
+                        >
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNSET_SELECT_VALUE}>Select year</SelectItem>
+                          {yearOptions.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldErrors.birthYear ? (
+                        <p className="text-xs text-destructive">{fieldErrors.birthYear}</p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Birth month</Label>
+                      <Select value={birthMonth} onValueChange={setBirthMonth}>
+                        <SelectTrigger
+                          aria-label="Birth month"
+                          className={cn(fieldErrors.birthMonth ? "border-destructive" : "")}
+                        >
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNSET_SELECT_VALUE}>Select month</SelectItem>
+                          {MONTHS.map((month) => (
+                            <SelectItem key={month.value} value={month.value}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldErrors.birthMonth ? (
+                        <p className="text-xs text-destructive">{fieldErrors.birthMonth}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Country</Label>
+                      <Combobox
+                        value={countryCode}
+                        options={countryOptions}
+                        onValueChange={setCountryCode}
+                        placeholder="Select country"
+                        searchPlaceholder="Search countries"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>
+                        Timezone <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        value={timezone || UNSET_SELECT_VALUE}
+                        onValueChange={(value) =>
+                          setTimezone(value === UNSET_SELECT_VALUE ? "" : value)
+                        }
+                      >
+                        <SelectTrigger
+                          aria-label="Timezone"
+                          className={cn(fieldErrors.timezone ? "border-destructive" : "")}
+                        >
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNSET_SELECT_VALUE}>Select timezone</SelectItem>
+                          {timezoneOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldErrors.timezone ? (
+                        <p className="text-xs text-destructive">{fieldErrors.timezone}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </section>
+
+                <div className="flex justify-end">
+                  <Button type="button" onClick={() => setActiveTab("language")}
+                    variant="secondary"
+                  >
+                    Next: Language
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="language" className="mt-6 space-y-6">
+                <section className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Languages</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Add at least one native language and any learning goals.
+                    </p>
+                  </div>
+                  {fieldErrors.languages ? (
+                    <p className="text-sm text-destructive">{fieldErrors.languages}</p>
+                  ) : null}
+                  <div className="space-y-4">
+                    {languages.map((language, index) => (
+                      <div
+                        key={`lang-${index}`}
+                        className="rounded-lg border border-border/60 p-4"
+                      >
+                        <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
+                          <div className="space-y-2">
+                            <Label>Language</Label>
+                            <Combobox
+                              value={language.language_code}
+                              options={languageOptions}
+                              onValueChange={(nextValue) => {
+                                const next = [...languages];
+                                next[index] = {
+                                  ...language,
+                                  language_code: nextValue,
+                                };
+                                setLanguages(next);
+                              }}
+                              placeholder="Select language"
+                              searchPlaceholder="Search languages"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Level</Label>
+                            <Select
+                              value={language.level.toString()}
+                              onValueChange={(value) => {
+                                const next = [...languages];
+                                const nextLevel = Number(value);
+                                const isNative = nextLevel === 5;
+                                next[index] = {
+                                  ...language,
+                                  level: nextLevel,
+                                  is_native: isNative,
+                                  is_target: isNative ? false : language.is_target,
+                                };
+                                setLanguages(next);
+                              }}
+                            >
+                              <SelectTrigger aria-label="Language level">
+                                <SelectValue placeholder="Select level" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(PROFICIENCY_LABELS).map(
+                                  ([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                      {label}
+                                    </SelectItem>
+                                  ),
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-end">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                const next = languages.filter((_, idx) => idx !== index);
+                                setLanguages(next.length ? next : languages);
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-[auto_1fr] md:items-center">
+                          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-primary"
+                              checked={language.is_target}
+                              onChange={(event) => {
+                                const next = [...languages];
+                                const isTarget = event.target.checked;
+                                const nextLevel =
+                                  isTarget && language.level === 5 ? 4 : language.level;
+                                next[index] = {
+                                  ...language,
+                                  level: nextLevel,
+                                  is_native: nextLevel === 5,
+                                  is_target: isTarget,
+                                };
+                                setLanguages(next);
+                              }}
+                            />
+                            Target language
+                          </label>
+                          <Input
+                            value={language.description ?? ""}
+                            onChange={(event) => {
+                              const next = [...languages];
+                              next[index] = {
+                                ...language,
+                                description: event.target.value,
+                              };
+                              setLanguages(next);
+                            }}
+                            placeholder="Short description (optional)"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setLanguages([
+                        ...languages,
+                        {
+                          language_code: "en",
+                          level: 0,
+                          is_native: false,
+                          is_target: false,
+                          description: "",
+                        },
+                      ])
+                    }
+                  >
+                    Add language
+                  </Button>
+                </section>
+
+                <div className="flex flex-wrap justify-between gap-3">
+                  <Button type="button" variant="ghost" onClick={() => setActiveTab("profile")}>
+                    Back to Profile
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setActiveTab("availability")}>
+                    Next: Availability
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="availability" className="mt-6 space-y-6">
+                <section className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Availability</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Share your preferred windows for sessions.
+                    </p>
+                  </div>
+                  {fieldErrors.availability ? (
+                    <p className="text-sm text-destructive">{fieldErrors.availability}</p>
+                  ) : null}
+                  <div className="space-y-4">
+                    {availability.map((slot, index) => (
+                      <div
+                        key={`slot-${index}`}
+                        className="rounded-lg border border-border/60 p-4"
+                      >
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label>Weekdays</Label>
+                            <ToggleGroup
+                              type="multiple"
+                              variant="outline"
+                              value={slot.weekdays.map((day) => day.toString())}
+                              onValueChange={(values) => {
+                                const next = [...availability];
+                                const weekdays = values
+                                  .map((value) => Number(value))
+                                  .filter((value) => !Number.isNaN(value));
+                                next[index] = {
+                                  ...slot,
+                                  weekdays: weekdays.sort(),
+                                };
+                                setAvailability(next);
+                              }}
+                              className="flex flex-wrap justify-start gap-2"
+                            >
+                              {WEEKDAYS.map((label, value) => (
+                                <ToggleGroupItem
+                                  key={label}
+                                  value={value.toString()}
+                                  aria-label={label}
+                                >
+                                  {label.slice(0, 3)}
+                                </ToggleGroupItem>
+                              ))}
+                            </ToggleGroup>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-[1fr_1fr_2fr_auto]">
+                            <div className="space-y-2">
+                              <Label>Start</Label>
+                              <Input
+                                type="time"
+                                value={slot.start_local_time}
+                                onChange={(event) => {
+                                  const next = [...availability];
+                                  next[index] = {
+                                    ...slot,
+                                    start_local_time: event.target.value,
+                                  };
+                                  setAvailability(next);
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>End</Label>
+                              <Input
+                                type="time"
+                                value={slot.end_local_time}
+                                onChange={(event) => {
+                                  const next = [...availability];
+                                  next[index] = {
+                                    ...slot,
+                                    end_local_time: event.target.value,
+                                  };
+                                  setAvailability(next);
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Timezone</Label>
+                              <Select
+                                value={slot.timezone || "profile"}
+                                onValueChange={(value) => {
+                                  const next = [...availability];
+                                  next[index] = {
+                                    ...slot,
+                                    timezone: value === "profile" ? "" : value,
+                                  };
+                                  setAvailability(next);
+                                }}
+                              >
+                                <SelectTrigger aria-label="Availability timezone">
+                                  <SelectValue placeholder="Use profile timezone" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="profile">Use profile timezone</SelectItem>
+                                  {timezoneOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex items-end">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  const next = availability.filter((_, idx) => idx !== index);
+                                  setAvailability(next.length ? next : availability);
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setAvailability([
+                        ...availability,
+                        {
+                          weekdays: [1],
+                          start_local_time: "18:00",
+                          end_local_time: "20:00",
+                          timezone: "",
+                        },
+                      ])
+                    }
+                  >
+                    Add availability slot
+                  </Button>
+                </section>
+
+                <div className="flex justify-start">
+                  <Button type="button" variant="ghost" onClick={() => setActiveTab("language")}>
+                    Back to Language
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-muted-foreground">
+              Save is disabled until every tab is valid.
+            </p>
+            <Button
+              className="sm:min-w-[160px]"
+              type="button"
+              onClick={onSave}
+              disabled={!canSave}
+            >
+              Save profile
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
