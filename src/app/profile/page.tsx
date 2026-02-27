@@ -330,8 +330,7 @@ export default function ProfilePage() {
         ];
       }
     }
-    const options = buildTimezoneOptions(timezones);
-    return [{ value: "", label: "Select timezone" }, ...options];
+    return buildTimezoneOptions(timezones);
   }, []);
 
   useEffect(() => {
@@ -796,7 +795,7 @@ export default function ProfilePage() {
                       <Combobox
                         id="timezone"
                         value={timezone}
-                        options={timezoneOptions}
+                        options={[{ value: "", label: "Select timezone" }, ...timezoneOptions]}
                         onValueChange={setTimezone}
                         placeholder="Select timezone"
                         searchPlaceholder="Search timezones"
