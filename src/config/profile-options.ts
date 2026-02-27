@@ -1,0 +1,45 @@
+export const MONTHS = [
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+export const DEFAULT_COUNTRY_CODES = [
+  "CA",
+  "US",
+  "GB",
+  "AU",
+  "NZ",
+  "DE",
+  "FR",
+  "ES",
+  "IT",
+  "BR",
+  "MX",
+  "IN",
+  "JP",
+  "KR",
+  "CN",
+];
+
+export const DEFAULT_LANGUAGE_CODES = [
+  "en",
+  "es",
+  "fr",
+  "de",
+  "pt",
+  "it",
+  "zh",
+  "ja",
+  "ko",
+  "ar",
+];

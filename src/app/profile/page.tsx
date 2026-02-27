@@ -6,6 +6,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { DEFAULT_COUNTRY_CODES, DEFAULT_LANGUAGE_CODES, MONTHS } from "@/config/profile-options";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +82,7 @@ type Option = {
 };
 
 type ComboboxProps = {
+  id?: string;
   value: string;
   options: Option[];
   onValueChange: (nextValue: string) => void;
@@ -115,52 +117,6 @@ const WEEKDAYS = [
   "Saturday",
 ];
 
-const MONTHS = [
-  { value: "1", label: "January" },
-  { value: "2", label: "February" },
-  { value: "3", label: "March" },
-  { value: "4", label: "April" },
-  { value: "5", label: "May" },
-  { value: "6", label: "June" },
-  { value: "7", label: "July" },
-  { value: "8", label: "August" },
-  { value: "9", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
-const DEFAULT_COUNTRY_CODES = [
-  "CA",
-  "US",
-  "GB",
-  "AU",
-  "NZ",
-  "DE",
-  "FR",
-  "ES",
-  "IT",
-  "BR",
-  "MX",
-  "IN",
-  "JP",
-  "KR",
-  "CN",
-];
-
-const DEFAULT_LANGUAGE_CODES = [
-  "en",
-  "es",
-  "fr",
-  "de",
-  "pt",
-  "it",
-  "zh",
-  "ja",
-  "ko",
-  "ar",
-];
-
 
 function buildOptions(values: string[], type: "language" | "region"): Option[] {
   const locale =
@@ -183,6 +139,7 @@ function buildTimezoneOptions(values: string[]): Option[] {
 }
 
 function Combobox({
+  id,
   value,
   options,
   onValueChange,
@@ -198,6 +155,7 @@ function Combobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -255,7 +213,6 @@ export default function ProfilePage() {
   const [countryCode, setCountryCode] = useState("");
   const [timezone, setTimezone] = useState("America/Vancouver");
   const [discoverable, setDiscoverable] = useState<boolean | null>(null);
-  const [email, setEmail] = useState("");
 
   const [handleAvailability, setHandleAvailability] = useState<
     "idle" | "checking" | "available" | "unavailable"
@@ -373,7 +330,8 @@ export default function ProfilePage() {
         ];
       }
     }
-    return buildTimezoneOptions(timezones);
+    const options = buildTimezoneOptions(timezones);
+    return [{ value: "", label: "Select timezone" }, ...options];
   }, []);
 
   useEffect(() => {
@@ -400,7 +358,6 @@ export default function ProfilePage() {
         setCountryCode(data.profile.country_code ?? "");
         setTimezone(data.profile.timezone ?? "America/Vancouver");
         setDiscoverable(data.profile.discoverable ?? null);
-        setEmail(data.user?.email ?? "");
         setLanguages(
           data.languages.length
             ? data.languages
@@ -571,15 +528,17 @@ export default function ProfilePage() {
 
   const fieldErrors = profileLoaded ? validation.errors : {};
 
+  const hasValidation = profileLoaded;
   const profileTabInvalid =
-    Boolean(
+    hasValidation &&
+    (Boolean(
       validation.errors.handle ||
         validation.errors.timezone ||
         validation.errors.birthYear ||
         validation.errors.birthMonth,
-    ) || effectiveHandleAvailability === "unavailable";
-  const languageTabInvalid = Boolean(validation.errors.languages);
-  const availabilityTabInvalid = Boolean(validation.errors.availability);
+    ) || effectiveHandleAvailability === "unavailable");
+  const languageTabInvalid = hasValidation && Boolean(validation.errors.languages);
+  const availabilityTabInvalid = hasValidation && Boolean(validation.errors.availability);
   const canSave =
     !loading &&
     Object.keys(validation.errors).length === 0 &&
@@ -671,9 +630,6 @@ export default function ProfilePage() {
                   Tell us about your languages and availability.
                 </CardDescription>
               </div>
-              <Button asChild variant="ghost">
-                <Link href="/">Back home</Link>
-              </Button>
             </div>
             {loading ? <p className="text-sm text-muted-foreground">Loading your profile…</p> : null}
             {discoverable !== null ? (
@@ -696,25 +652,28 @@ export default function ProfilePage() {
                 <TabsTrigger value="profile" className="flex items-center justify-center gap-2">
                   Profile
                   {profileTabInvalid ? (
-                    <Badge variant="destructive" className="hidden sm:inline-flex">
-                      Fix
-                    </Badge>
+                    <span
+                      className="ml-2 h-2 w-2 rounded-full bg-destructive"
+                      aria-hidden="true"
+                    />
                   ) : null}
                 </TabsTrigger>
                 <TabsTrigger value="language" className="flex items-center justify-center gap-2">
                   Language
                   {languageTabInvalid ? (
-                    <Badge variant="destructive" className="hidden sm:inline-flex">
-                      Fix
-                    </Badge>
+                    <span
+                      className="ml-2 h-2 w-2 rounded-full bg-destructive"
+                      aria-hidden="true"
+                    />
                   ) : null}
                 </TabsTrigger>
                 <TabsTrigger value="availability" className="flex items-center justify-center gap-2">
                   Availability
                   {availabilityTabInvalid ? (
-                    <Badge variant="destructive" className="hidden sm:inline-flex">
-                      Fix
-                    </Badge>
+                    <span
+                      className="ml-2 h-2 w-2 rounded-full bg-destructive"
+                      aria-hidden="true"
+                    />
                   ) : null}
                 </TabsTrigger>
               </TabsList>
@@ -730,17 +689,25 @@ export default function ProfilePage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="handle">
-                        Handle (no @) <span className="text-destructive">*</span>
+                        Handle <span className="text-destructive">*</span>
                       </Label>
-                      <Input
-                        id="handle"
-                        value={handle}
-                        onChange={(event) =>
-                          setHandle(event.target.value.replace(/^@+/, ""))
-                        }
-                        placeholder="arturo"
-                        className={cn(fieldErrors.handle ? "border-destructive" : "")}
-                      />
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          @
+                        </span>
+                        <Input
+                          id="handle"
+                          value={handle}
+                          onChange={(event) =>
+                            setHandle(event.target.value.replace(/^@+/, ""))
+                          }
+                          placeholder="arturo"
+                          className={cn(
+                            "pl-7",
+                            fieldErrors.handle ? "border-destructive" : "",
+                          )}
+                        />
+                      </div>
                       {fieldErrors.handle ? (
                         <p className="text-xs text-destructive">{fieldErrors.handle}</p>
                       ) : null}
@@ -760,10 +727,6 @@ export default function ProfilePage() {
                           Handle must be 3–20 letters or numbers.
                         </p>
                       ) : null}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email (read-only)</Label>
-                      <Input id="email" value={email} readOnly />
                     </div>
                   </div>
 
@@ -816,8 +779,9 @@ export default function ProfilePage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Country</Label>
+                      <Label htmlFor="country">Country</Label>
                       <Combobox
+                        id="country"
                         value={countryCode}
                         options={countryOptions}
                         onValueChange={setCountryCode}
@@ -826,30 +790,17 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>
+                      <Label htmlFor="timezone">
                         Timezone <span className="text-destructive">*</span>
                       </Label>
-                      <Select
-                        value={timezone || UNSET_SELECT_VALUE}
-                        onValueChange={(value) =>
-                          setTimezone(value === UNSET_SELECT_VALUE ? "" : value)
-                        }
-                      >
-                        <SelectTrigger
-                          aria-label="Timezone"
-                          className={cn(fieldErrors.timezone ? "border-destructive" : "")}
-                        >
-                          <SelectValue placeholder="Select timezone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNSET_SELECT_VALUE}>Select timezone</SelectItem>
-                          {timezoneOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Combobox
+                        id="timezone"
+                        value={timezone}
+                        options={timezoneOptions}
+                        onValueChange={setTimezone}
+                        placeholder="Select timezone"
+                        searchPlaceholder="Search timezones"
+                      />
                       {fieldErrors.timezone ? (
                         <p className="text-xs text-destructive">{fieldErrors.timezone}</p>
                       ) : null}
@@ -1003,10 +954,7 @@ export default function ProfilePage() {
                   </Button>
                 </section>
 
-                <div className="flex flex-wrap justify-between gap-3">
-                  <Button type="button" variant="ghost" onClick={() => setActiveTab("profile")}>
-                    Back to Profile
-                  </Button>
+                <div className="flex justify-end">
                   <Button type="button" variant="secondary" onClick={() => setActiveTab("availability")}>
                     Next: Availability
                   </Button>
@@ -1154,18 +1102,15 @@ export default function ProfilePage() {
                   </Button>
                 </section>
 
-                <div className="flex justify-start">
-                  <Button type="button" variant="ghost" onClick={() => setActiveTab("language")}>
-                    Back to Language
-                  </Button>
-                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
           <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-muted-foreground">
-              Save is disabled until every tab is valid.
-            </p>
+            {profileTabInvalid || languageTabInvalid || availabilityTabInvalid ? (
+              <p className="text-xs text-muted-foreground">
+                Save is disabled until every tab is valid.
+              </p>
+            ) : null}
             <Button
               className="sm:min-w-[160px]"
               type="button"

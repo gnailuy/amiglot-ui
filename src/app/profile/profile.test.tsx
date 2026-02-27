@@ -71,6 +71,15 @@ const selectOption = async (
   await waitFor(() => expect(option.selected).toBe(true));
 };
 
+const selectComboboxOption = async (
+  user: ReturnType<typeof userEvent.setup>,
+  trigger: HTMLElement,
+  optionText: string,
+) => {
+  await user.click(trigger);
+  await user.click(await screen.findByText(optionText));
+};
+
 vi.mock("@/lib/api", () => ({
   ApiError: class ApiError extends Error {
     status: number;
@@ -151,7 +160,6 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
 
     expect(await screen.findByText(/profile setup/i)).toBeInTheDocument();
-    expect(await screen.findByDisplayValue("user@example.com")).toBeInTheDocument();
   });
 
   it("validates required fields on save", async () => {
@@ -360,7 +368,6 @@ describe("ProfilePage", () => {
 
     render(<ProfilePage />);
 
-    await screen.findByDisplayValue("user@example.com");
     await waitFor(() =>
       expect(screen.queryByText(/loading your profile/i)).not.toBeInTheDocument(),
     );
@@ -576,7 +583,7 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
-    await selectOption(user, screen.getByLabelText(/timezone/i), "Select timezone");
+    await selectComboboxOption(user, screen.getByLabelText(/timezone/i), "Select timezone");
 
     expect(await screen.findByText(/timezone is required/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /save profile/i })).toBeDisabled();
