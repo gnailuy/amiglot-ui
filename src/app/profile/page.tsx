@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -76,31 +78,11 @@ type HandleCheckResponse = {
 
 type Option = SelectOption;
 
-const PROFICIENCY_LABELS: Record<number, string> = {
-  0: "Zero",
-  1: "Beginner",
-  2: "Elementary",
-  3: "Intermediate",
-  4: "Advanced",
-  5: "Native",
-};
-
 const HANDLE_PATTERN = /^[a-zA-Z0-9]+$/;
 const HANDLE_MIN_LENGTH = 3;
 const HANDLE_MAX_LENGTH = 20;
 const BIRTH_YEAR_MIN = 1900;
 const UNSET_SELECT_VALUE = "__unset__";
-
-const WEEKDAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
 
 function buildOptions(values: string[], type: "language" | "region"): Option[] {
   const locale =
@@ -182,6 +164,26 @@ function getBrowserTimezone() {
 }
 
 export default function ProfilePage() {
+  const t = useTranslations("profile");
+  const PROFICIENCY_LABELS: Record<number, string> = {
+    0: t("languageLevel.zero"),
+    1: t("languageLevel.beginner"),
+    2: t("languageLevel.elementary"),
+    3: t("languageLevel.intermediate"),
+    4: t("languageLevel.advanced"),
+    5: t("languageLevel.native"),
+  };
+
+  const WEEKDAYS = [
+    t("weekdays.sunday"),
+    t("weekdays.monday"),
+    t("weekdays.tuesday"),
+    t("weekdays.wednesday"),
+    t("weekdays.thursday"),
+    t("weekdays.friday"),
+    t("weekdays.saturday"),
+  ];
+
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -266,18 +268,18 @@ export default function ProfilePage() {
 
   const birthYearOptions = useMemo<SelectOption[]>(
     () => [
-      { value: UNSET_SELECT_VALUE, label: "Select year" },
+      { value: UNSET_SELECT_VALUE, label: t("birthYearPlaceholder") },
       ...yearOptions.map((year) => ({ value: year.toString(), label: year.toString() })),
     ],
-    [yearOptions],
+    [t, yearOptions],
   );
 
   const birthMonthOptions = useMemo<SelectOption[]>(
     () => [
-      { value: UNSET_SELECT_VALUE, label: "Select month" },
-      ...MONTHS.map((month) => ({ value: month.value, label: month.label })),
+      { value: UNSET_SELECT_VALUE, label: t("birthMonthPlaceholder") },
+      ...MONTHS.map((month) => ({ value: month, label: t(`months.${month}`) })),
     ],
-    [],
+    [t],
   );
 
   const countryOptions = useMemo(() => {
@@ -419,13 +421,13 @@ export default function ProfilePage() {
         setMessage(
           error instanceof Error
             ? error.message
-            : "Could not load your profile yet.",
+            : t("profileLoadedError"),
         );
       })
       .finally(() => {
         setProfileLoaded(true);
       });
-  }, [hasAuth, token, userId]);
+  }, [hasAuth, token, userId, t]);
 
   useEffect(() => {
     if (!hasAuth || handleValidity !== "valid" || !handleChanged) {
@@ -457,38 +459,38 @@ export default function ProfilePage() {
 
     const trimmedHandle = handle.trim().replace(/^@+/, "");
     if (!trimmedHandle) {
-      nextErrors.handle = "Handle is required.";
+      nextErrors.handle = t("handleRequired");
     } else if (!HANDLE_PATTERN.test(trimmedHandle)) {
-      nextErrors.handle = "Handle can only use letters and numbers.";
+      nextErrors.handle = t("handleInvalidCharacters");
     } else if (
       trimmedHandle.length < HANDLE_MIN_LENGTH ||
       trimmedHandle.length > HANDLE_MAX_LENGTH
     ) {
-      nextErrors.handle = "Handle must be 3–20 characters.";
+      nextErrors.handle = t("handleInvalidLength");
     }
 
     const trimmedTimezone = timezone.trim();
     if (!trimmedTimezone) {
-      nextErrors.timezone = "Timezone is required.";
+      nextErrors.timezone = t("timezoneInvalid");
     }
 
     if (birthYear !== UNSET_SELECT_VALUE) {
       const year = Number(birthYear);
       const currentYear = new Date().getFullYear();
       if (Number.isNaN(year) || year < BIRTH_YEAR_MIN || year > currentYear) {
-        nextErrors.birthYear = "Birth year must be within range.";
+        nextErrors.birthYear = t("birthYearInvalid");
       }
     }
 
     if (birthMonth !== UNSET_SELECT_VALUE) {
       const month = Number(birthMonth);
       if (Number.isNaN(month) || month < 1 || month > 12) {
-        nextErrors.birthMonth = "Birth month must be between 1 and 12.";
+        nextErrors.birthMonth = t("birthMonthInvalid");
       }
     }
 
     if (!languages.length) {
-      nextErrors.languages = "At least one language is required.";
+      nextErrors.languages = t("languagesRequired");
     }
 
     const cleanedLanguages = languages.map((lang) => {
@@ -504,7 +506,7 @@ export default function ProfilePage() {
     });
 
     if (cleanedLanguages.some((lang) => !lang.language_code)) {
-      nextErrors.languages = "Please fill every language code or remove empty rows.";
+      nextErrors.languages = t("languagesEmpty");
     }
 
     const normalizedLanguageCodes = cleanedLanguages
@@ -514,19 +516,19 @@ export default function ProfilePage() {
       (code, index) => normalizedLanguageCodes.indexOf(code) !== index,
     );
     if (duplicateLanguageCodes.length) {
-      nextErrors.languages = "Each language can only be added once.";
+      nextErrors.languages = t("languagesDuplicate");
     }
 
     const nativeCount = cleanedLanguages.filter((lang) => lang.is_native).length;
     if (nativeCount === 0) {
-      nextErrors.languages = "At least one native language is required.";
+      nextErrors.languages = t("languagesNativeRequired");
     }
 
     if (availability.some((slot) => slot.weekdays.length === 0)) {
-      nextErrors.availability = "Select at least one weekday for each slot.";
+      nextErrors.availability = t("availabilityWeekdayRequired");
     }
     if (availability.some((slot) => !slot.start_local_time || !slot.end_local_time)) {
-      nextErrors.availability = "Set a start and end time for each slot.";
+      nextErrors.availability = t("availabilityTimeRequired");
     }
 
     const expandedAvailability = availability.flatMap((slot) =>
@@ -545,7 +547,7 @@ export default function ProfilePage() {
       trimmedHandle,
       trimmedTimezone,
     };
-  }, [handle, birthYear, birthMonth, timezone, languages, availability]);
+  }, [handle, birthYear, birthMonth, timezone, languages, availability, t]);
 
   const fieldErrors = profileLoaded ? validation.errors : {};
 
@@ -569,7 +571,7 @@ export default function ProfilePage() {
     setMessage(null);
 
     if (!canSave) {
-      setMessage("Please fix the highlighted fields.");
+      setMessage(t("saveFixErrors"));
       return;
     }
 
@@ -592,10 +594,10 @@ export default function ProfilePage() {
 
       const refreshed = await getJson<ProfileResponse>("/profile");
       setDiscoverable(refreshed.profile.discoverable ?? null);
-      setMessage("Profile saved.");
+      setMessage(t("profileSaved"));
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Could not save profile.",
+        error instanceof Error ? error.message : t("profileSaveFailed"),
       );
     }
   };
@@ -606,10 +608,10 @@ export default function ProfilePage() {
         <div className="mx-auto w-full max-w-4xl">
           <Card>
             <CardHeader>
-              <CardTitle>Profile setup</CardTitle>
+              <CardTitle>{t("title")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Loading your session...</p>
+              <p>{t("loadingSession")}</p>
             </CardContent>
           </Card>
         </div>
@@ -623,14 +625,14 @@ export default function ProfilePage() {
         <div className="mx-auto w-full max-w-2xl">
           <Card>
             <CardHeader>
-              <CardTitle>Profile setup</CardTitle>
+              <CardTitle>{t("signinRequiredTitle")}</CardTitle>
               <CardDescription>
-                You need to sign in before setting up your profile.
+                {t("signinRequiredDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <Link href="/login">Sign in with magic link</Link>
+                <Link href="/login">{t("signinButton")}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -646,18 +648,18 @@ export default function ProfilePage() {
           <CardHeader className="space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl">Profile setup</CardTitle>
+                <CardTitle className="text-2xl">{t("title")}</CardTitle>
                 <CardDescription>
-                  Tell us about your languages and availability.
+                  {t("profileSetupIntro")}
                 </CardDescription>
               </div>
             </div>
-            {loading ? <p className="text-sm text-muted-foreground">Loading your profile…</p> : null}
+            {loading ? <p className="text-sm text-muted-foreground">{t("loadingProfile")}</p> : null}
             {discoverable !== null ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Discoverable status:</span>
+                <span>{t("discoverableStatus")}</span>
                 <Badge variant={discoverable ? "default" : "secondary"}>
-                  {discoverable ? "Enabled" : "Not yet"}
+                  {discoverable ? t("discoverableEnabled") : t("discoverableDisabled")}
                 </Badge>
               </div>
             ) : null}
@@ -671,7 +673,7 @@ export default function ProfilePage() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile" className="flex items-center justify-center gap-2">
-                  Profile
+                  {t("profileTab")}
                   {profileTabInvalid ? (
                     <span
                       className="ml-2 h-2 w-2 rounded-full bg-destructive"
@@ -680,7 +682,7 @@ export default function ProfilePage() {
                   ) : null}
                 </TabsTrigger>
                 <TabsTrigger value="language" className="flex items-center justify-center gap-2">
-                  Language
+                  {t("languageTab")}
                   {languageTabInvalid ? (
                     <span
                       className="ml-2 h-2 w-2 rounded-full bg-destructive"
@@ -689,7 +691,7 @@ export default function ProfilePage() {
                   ) : null}
                 </TabsTrigger>
                 <TabsTrigger value="availability" className="flex items-center justify-center gap-2">
-                  Availability
+                  {t("availabilityTab")}
                   {availabilityTabInvalid ? (
                     <span
                       className="ml-2 h-2 w-2 rounded-full bg-destructive"
@@ -702,15 +704,15 @@ export default function ProfilePage() {
               <TabsContent value="profile" className="mt-6 space-y-6">
                 <section className="space-y-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Profile</h2>
+                    <h2 className="text-lg font-semibold">{t("sectionProfileTitle")}</h2>
                     <p className="text-sm text-muted-foreground">
-                      This helps us personalize your matches and schedule.
+                      {t("sectionProfileDescription")}
                     </p>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="handle">
-                        Handle <span className="text-destructive">*</span>
+                        {t("handleLabel")} <span className="text-destructive">*</span>
                       </Label>
                       <div className="relative">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -722,7 +724,7 @@ export default function ProfilePage() {
                           onChange={(event) =>
                             setHandle(event.target.value.replace(/^@+/, ""))
                           }
-                          placeholder="arturo"
+                          placeholder={t("handlePlaceholder")}
                           className={cn(
                             "pl-7",
                             fieldErrors.handle ? "border-destructive" : "",
@@ -733,26 +735,26 @@ export default function ProfilePage() {
                         <p className="text-xs text-destructive">{fieldErrors.handle}</p>
                       ) : null}
                       {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
-                        <p className="text-xs text-muted-foreground">Checking availability…</p>
+                        <p className="text-xs text-muted-foreground">{t("handleAvailabilityChecking")}</p>
                       ) : null}
                       {!fieldErrors.handle &&
                       handleChanged &&
                       effectiveHandleAvailability === "available" ? (
                         <p className="text-xs text-emerald-600 dark:text-emerald-300">
-                          Handle is available.
+                          {t("handleAvailabilityAvailable")}
                         </p>
                       ) : null}
                       {!fieldErrors.handle && effectiveHandleAvailability === "unavailable" ? (
-                        <p className="text-xs text-destructive">Handle is taken.</p>
+                        <p className="text-xs text-destructive">{t("handleAvailabilityUnavailable")}</p>
                       ) : null}
                       {!fieldErrors.handle && effectiveHandleAvailability === "invalid" ? (
                         <p className="text-xs text-destructive">
-                          Handle must be 3–20 letters or numbers.
+                          {t("handleInvalidLengthHelper")}
                         </p>
                       ) : null}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t("emailLabel")}</Label>
                       <Input
                         id="email"
                         readOnly
@@ -764,15 +766,15 @@ export default function ProfilePage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="birth-year">Birth year</Label>
+                      <Label htmlFor="birth-year">{t("birthYearLabel")}</Label>
                       <SmartSelect
                         id="birth-year"
                         value={birthYear}
                         options={birthYearOptions}
                         onValueChange={setBirthYear}
-                        placeholder="Select year"
-                        searchPlaceholder="Search years"
-                        searchAriaLabel="Search years"
+                        placeholder={t("birthYearPlaceholder")}
+                        searchPlaceholder={t("birthYearPlaceholder")}
+                        searchAriaLabel={t("birthYearPlaceholder")}
                         className={cn(fieldErrors.birthYear ? "border-destructive" : "")}
                       />
                       {fieldErrors.birthYear ? (
@@ -780,13 +782,13 @@ export default function ProfilePage() {
                       ) : null}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="birth-month">Birth month</Label>
+                      <Label htmlFor="birth-month">{t("birthMonthLabel")}</Label>
                       <SmartSelect
                         id="birth-month"
                         value={birthMonth}
                         options={birthMonthOptions}
                         onValueChange={setBirthMonth}
-                        placeholder="Select month"
+                        placeholder={t("birthMonthPlaceholder")}
                         longListThreshold={13}
                         className={cn(fieldErrors.birthMonth ? "border-destructive" : "")}
                       />
@@ -798,27 +800,27 @@ export default function ProfilePage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="country">Country</Label>
+                      <Label htmlFor="country">{t("countryLabel")}</Label>
                       <SmartSelect
                         id="country"
                         value={countryCode}
                         options={countryOptions}
                         onValueChange={setCountryCode}
-                        placeholder="Select country"
-                        searchPlaceholder="Search countries"
+                        placeholder={t("countryPlaceholder")}
+                        searchPlaceholder={t("countryPlaceholder")}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="timezone">
-                        Timezone <span className="text-destructive">*</span>
+                        {t("timezoneLabel")} <span className="text-destructive">*</span>
                       </Label>
                       <SmartSelect
                         id="timezone"
                         value={timezone}
-                        options={[{ value: "", label: "Select timezone" }, ...timezoneOptions]}
+                        options={[{ value: "", label: t("timezonePlaceholder") }, ...timezoneOptions]}
                         onValueChange={setTimezone}
-                        placeholder="Select timezone"
-                        searchPlaceholder="Search timezones"
+                        placeholder={t("timezonePlaceholder")}
+                        searchPlaceholder={t("timezonePlaceholder")}
                       />
                       {fieldErrors.timezone ? (
                         <p className="text-xs text-destructive">{fieldErrors.timezone}</p>
@@ -831,7 +833,7 @@ export default function ProfilePage() {
                   <Button type="button" onClick={() => setActiveTab("language")}
                     variant="secondary"
                   >
-                    Next: Language
+                    {t("nextLanguage")}
                   </Button>
                 </div>
               </TabsContent>
@@ -839,9 +841,9 @@ export default function ProfilePage() {
               <TabsContent value="language" className="mt-6 space-y-6">
                 <section className="space-y-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Languages</h2>
+                    <h2 className="text-lg font-semibold">{t("sectionLanguageTitle")}</h2>
                     <p className="text-sm text-muted-foreground">
-                      Add at least one native language and any learning goals.
+                      {t("sectionLanguageDescription")}
                     </p>
                   </div>
                   {fieldErrors.languages ? (
@@ -855,7 +857,7 @@ export default function ProfilePage() {
                       >
                         <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                           <div className="space-y-2">
-                            <Label>Language</Label>
+                            <Label>{t("languageLabel")}</Label>
                             <SmartSelect
                               value={language.language_code}
                               options={languageOptions}
@@ -867,12 +869,12 @@ export default function ProfilePage() {
                                 };
                                 setLanguages(next);
                               }}
-                              placeholder="Select language"
-                              searchPlaceholder="Search languages"
+                              placeholder={t("languagePlaceholder")}
+                              searchPlaceholder={t("languageSearchPlaceholder")}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>Level</Label>
+                            <Label>{t("levelLabel")}</Label>
                             <Select
                               value={language.level.toString()}
                               onValueChange={(value) => {
@@ -889,7 +891,7 @@ export default function ProfilePage() {
                               }}
                             >
                               <SelectTrigger aria-label="Language level">
-                                <SelectValue placeholder="Select level" />
+                                <SelectValue placeholder={t("levelLabel")} />
                               </SelectTrigger>
                               <SelectContent>
                                 {Object.entries(PROFICIENCY_LABELS).map(
@@ -911,7 +913,7 @@ export default function ProfilePage() {
                                 setLanguages(next.length ? next : languages);
                               }}
                             >
-                              Remove
+                              {t("removeButton")}
                             </Button>
                           </div>
                         </div>
@@ -935,7 +937,7 @@ export default function ProfilePage() {
                                 setLanguages(next);
                               }}
                             />
-                            Target language
+                            {t("targetLanguage")}
                           </label>
                           <Input
                             value={language.description ?? ""}
@@ -947,7 +949,7 @@ export default function ProfilePage() {
                               };
                               setLanguages(next);
                             }}
-                            placeholder="Short description (optional)"
+                            placeholder={t("languageDescriptionPlaceholder")}
                           />
                         </div>
                       </div>
@@ -969,13 +971,13 @@ export default function ProfilePage() {
                       ])
                     }
                   >
-                    Add language
+                    {t("addLanguage")}
                   </Button>
                 </section>
 
                 <div className="flex justify-end">
                   <Button type="button" variant="secondary" onClick={() => setActiveTab("availability")}>
-                    Next: Availability
+                    {t("nextAvailability")}
                   </Button>
                 </div>
               </TabsContent>
@@ -983,9 +985,9 @@ export default function ProfilePage() {
               <TabsContent value="availability" className="mt-6 space-y-6">
                 <section className="space-y-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Availability</h2>
+                    <h2 className="text-lg font-semibold">{t("sectionAvailabilityTitle")}</h2>
                     <p className="text-sm text-muted-foreground">
-                      Share your preferred windows for sessions.
+                      {t("sectionAvailabilityDescription")}
                     </p>
                   </div>
                   {fieldErrors.availability ? (
@@ -999,7 +1001,7 @@ export default function ProfilePage() {
                       >
                         <div className="space-y-3">
                           <div className="space-y-2">
-                            <Label>Weekdays</Label>
+                            <Label>{t("weekdaysLabel")}</Label>
                             <ToggleGroup
                               type="multiple"
                               variant="outline"
@@ -1030,7 +1032,7 @@ export default function ProfilePage() {
                           </div>
                           <div className="grid gap-3 md:grid-cols-[1fr_1fr_2fr_auto]">
                             <div className="space-y-2">
-                              <Label>Start</Label>
+                              <Label>{t("startLabel")}</Label>
                               <Input
                                 type="time"
                                 value={slot.start_local_time}
@@ -1045,7 +1047,7 @@ export default function ProfilePage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label>End</Label>
+                              <Label>{t("endLabel")}</Label>
                               <Input
                                 type="time"
                                 value={slot.end_local_time}
@@ -1060,7 +1062,7 @@ export default function ProfilePage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label>Timezone</Label>
+                              <Label>{t("availabilityTimezoneLabel")}</Label>
                               <SmartSelect
                                 value={slot.timezone || timezone}
                                 onValueChange={(value) => {
@@ -1072,8 +1074,8 @@ export default function ProfilePage() {
                                   setAvailability(next);
                                 }}
                                 options={timezoneOptions}
-                                placeholder="Select timezone"
-                                searchPlaceholder="Search timezones"
+                                placeholder={t("availabilityTimezonePlaceholder")}
+                                searchPlaceholder={t("availabilityTimezonePlaceholder")}
                               />
                             </div>
                             <div className="flex items-end">
@@ -1085,7 +1087,7 @@ export default function ProfilePage() {
                                   setAvailability(next.length ? next : availability);
                                 }}
                               >
-                                Remove
+                                {t("removeButton")}
                               </Button>
                             </div>
                           </div>
@@ -1108,7 +1110,7 @@ export default function ProfilePage() {
                       ])
                     }
                   >
-                    Add availability slot
+                    {t("addAvailability")}
                   </Button>
                 </section>
 
@@ -1119,7 +1121,7 @@ export default function ProfilePage() {
             <div className="flex-1">
               {profileTabInvalid || languageTabInvalid || availabilityTabInvalid ? (
                 <p className="text-xs text-muted-foreground">
-                  Save is disabled until every tab is valid.
+                  {t("saveDisabledHint")}
                 </p>
               ) : null}
             </div>
@@ -1129,7 +1131,7 @@ export default function ProfilePage() {
               onClick={onSave}
               disabled={!canSave}
             >
-              Save profile
+              {t("saveProfile")}
             </Button>
           </CardFooter>
         </Card>

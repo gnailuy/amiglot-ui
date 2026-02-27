@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import messages from "@/i18n/messages/en.json";
 import VerifyPage from "./page";
 
 const postJson = vi.fn();
@@ -29,6 +31,13 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+const renderWithIntl = (ui: React.ReactElement) =>
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+
 describe("VerifyPage", () => {
   beforeEach(() => {
     postJson.mockReset();
@@ -40,7 +49,7 @@ describe("VerifyPage", () => {
   it("shows missing token message when no token provided", () => {
     useSearchParams.mockReturnValue({ get: () => null });
 
-    render(<VerifyPage />);
+    renderWithIntl(<VerifyPage />);
 
     expect(screen.getByText(/missing token/i)).toBeInTheDocument();
     expect(postJson).not.toHaveBeenCalled();
@@ -53,7 +62,7 @@ describe("VerifyPage", () => {
       user: { id: "user-1", email: "user@test.com" },
     });
 
-    render(<VerifyPage />);
+    renderWithIntl(<VerifyPage />);
 
     expect(await screen.findByText(/welcome back/i)).toBeInTheDocument();
     expect(setAccessToken).toHaveBeenCalledWith("access-456");

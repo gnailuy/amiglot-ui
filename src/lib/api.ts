@@ -1,4 +1,5 @@
 import { getAccessToken, getUserId } from "@/lib/session";
+import { getPreferredLocale } from "@/i18n/locale";
 
 export const API_BASE = "/api/v1";
 
@@ -23,12 +24,13 @@ export class ApiError extends Error {
 }
 
 function buildHeaders(options: { token?: string } = {}): Record<string, string> {
+  const fallbackLocale =
+    typeof navigator !== "undefined" && navigator.language
+      ? navigator.language
+      : "en";
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "Accept-Language":
-      typeof navigator !== "undefined" && navigator.language
-        ? navigator.language
-        : "en",
+    "Accept-Language": getPreferredLocale(fallbackLocale),
   };
 
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

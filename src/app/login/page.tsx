@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+
 import { postJson } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +16,7 @@ type MagicLinkResponse = {
 };
 
 export default function LoginPage() {
+  const t = useTranslations("login");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
@@ -33,14 +36,14 @@ export default function LoginPage() {
       });
 
       setStatus("success");
-      setMessage("Check your email for a sign-in link.");
+      setMessage(t("success"));
 
       if (data.dev_login_url) {
         setDevLink(data.dev_login_url);
       }
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "Something went wrong.");
+      setMessage(error instanceof Error ? error.message : t("errorFallback"));
     }
   };
 
@@ -56,15 +59,13 @@ export default function LoginPage() {
       <div className="mx-auto flex w-full max-w-md flex-col justify-center">
         <Card className="border-muted/60 shadow-sm">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl">Sign in</CardTitle>
-            <CardDescription>
-              We&apos;ll email you a magic link to continue.
-            </CardDescription>
+            <CardTitle className="text-2xl">{t("title")}</CardTitle>
+            <CardDescription>{t("description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">{t("emailLabel")}</Label>
                 <Input
                   id="email"
                   name="email"
@@ -73,7 +74,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t("emailPlaceholder")}
                 />
               </div>
               <Button
@@ -81,7 +82,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={status === "loading"}
               >
-                {status === "loading" ? "Sending..." : "Send magic link"}
+                {status === "loading" ? t("sending") : t("sendMagicLink")}
               </Button>
             </form>
             {message && (
@@ -94,7 +95,7 @@ export default function LoginPage() {
             )}
             {devLink && (
               <div className="mt-3 text-xs text-muted-foreground">
-                Dev login link: {" "}
+                {t("devLink")}{" "}
                 <a className="underline" href={devLink}>
                   {devLink}
                 </a>
@@ -103,7 +104,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter>
             <Link className="text-sm text-muted-foreground hover:text-foreground" href="/">
-              Back to home
+              {t("backHome")}
             </Link>
           </CardFooter>
         </Card>
