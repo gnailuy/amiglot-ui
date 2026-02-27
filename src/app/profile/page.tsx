@@ -145,6 +145,7 @@ export default function ProfilePage() {
 
   const [email, setEmail] = useState("");
   const [handle, setHandle] = useState("");
+  const [originalHandle, setOriginalHandle] = useState("");
   const [birthYear, setBirthYear] = useState(UNSET_SELECT_VALUE);
   const [birthMonth, setBirthMonth] = useState(UNSET_SELECT_VALUE);
   const [countryCode, setCountryCode] = useState("");
@@ -168,13 +169,25 @@ export default function ProfilePage() {
     }
     return "valid" as const;
   }, [handle]);
+  const handleChanged = useMemo(() => {
+    const trimmedHandle = handle.trim().replace(/^@+/, "");
+    const trimmedOriginal = originalHandle.trim().replace(/^@+/, "");
+    if (!trimmedOriginal) {
+      return false;
+    }
+    return trimmedHandle !== trimmedOriginal;
+  }, [handle, originalHandle]);
   const effectiveHandleAvailability:
     | "idle"
     | "checking"
     | "available"
     | "unavailable"
     | "invalid" =
-    handleValidity === "valid" ? handleAvailability : handleValidity;
+    handleValidity === "valid"
+      ? handleChanged
+        ? handleAvailability
+        : "idle"
+      : handleValidity;
 
   const [languages, setLanguages] = useState<LanguagePayload[]>([
     {
@@ -306,6 +319,7 @@ export default function ProfilePage() {
       .then((data) => {
         setEmail(data.user.email ?? "");
         setHandle(data.profile.handle ?? "");
+        setOriginalHandle(data.profile.handle ?? "");
         setBirthYear(data.profile.birth_year?.toString() ?? UNSET_SELECT_VALUE);
         setBirthMonth(data.profile.birth_month?.toString() ?? UNSET_SELECT_VALUE);
         setCountryCode(data.profile.country_code ?? "");
@@ -360,7 +374,7 @@ export default function ProfilePage() {
   }, [hasAuth, token, userId]);
 
   useEffect(() => {
-    if (!hasAuth || handleValidity !== "valid") {
+    if (!hasAuth || handleValidity !== "valid" || !handleChanged) {
       return;
     }
     const trimmedHandle = handle.trim().replace(/^@+/, "");
@@ -382,7 +396,7 @@ export default function ProfilePage() {
     }, 500);
 
     return () => window.clearTimeout(timeout);
-  }, [handle, hasAuth, handleValidity]);
+  }, [handle, hasAuth, handleValidity, handleChanged, originalHandle]);
 
   const validation = useMemo(() => {
     const nextErrors: Record<string, string> = {};
@@ -667,7 +681,9 @@ export default function ProfilePage() {
                       {!fieldErrors.handle && effectiveHandleAvailability === "checking" ? (
                         <p className="text-xs text-muted-foreground">Checking availability…</p>
                       ) : null}
-                      {!fieldErrors.handle && effectiveHandleAvailability === "available" ? (
+                      {!fieldErrors.handle &&
+                      handleChanged &&
+                      effectiveHandleAvailability === "available" ? (
                         <p className="text-xs text-emerald-600 dark:text-emerald-300">
                           Handle is available.
                         </p>

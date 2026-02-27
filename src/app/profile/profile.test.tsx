@@ -363,7 +363,6 @@ describe("ProfilePage", () => {
           },
         ],
       })
-      .mockResolvedValueOnce({ available: true })
       .mockResolvedValueOnce({
         user: { id: "user-1", email: "user@example.com" },
         profile: {
