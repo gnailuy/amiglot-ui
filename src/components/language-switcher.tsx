@@ -5,45 +5,16 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
 import { DEFAULT_LANGUAGE_CODES } from "@/config/profile-options";
-import { normalizeLocale, setLocaleCookie } from "@/i18n/locale";
+import { buildLanguageSelectOptions } from "@/i18n/language-options";
+import { setLocaleCookie } from "@/i18n/locale";
 
 export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations("nav");
-  const options = useMemo<SelectOption[]>(() => {
-    const normalized = new Set<string>();
-    const localeNames =
-      typeof Intl !== "undefined" && "DisplayNames" in Intl
-        ? new Intl.DisplayNames([locale], { type: "language" })
-        : null;
-
-    const list: SelectOption[] = [];
-
-    DEFAULT_LANGUAGE_CODES.forEach((code) => {
-      const normalizedCode = normalizeLocale(code);
-      if (normalized.has(normalizedCode)) {
-        return;
-      }
-      normalized.add(normalizedCode);
-
-      let label = normalizedCode;
-
-      if (localeNames) {
-        try {
-          label = localeNames.of(normalizedCode) ?? normalizedCode;
-        } catch {
-          label = normalizedCode;
-        }
-      }
-
-      list.push({
-        value: normalizedCode,
-        label: label ? `${label} (${normalizedCode})` : normalizedCode,
-      });
-    });
-
-    return list.sort((a, b) => a.label.localeCompare(b.label));
-  }, [locale]);
+  const options = useMemo<SelectOption[]>(
+    () => buildLanguageSelectOptions(DEFAULT_LANGUAGE_CODES, locale),
+    [locale],
+  );
 
   const onChange = (value: string) => {
     if (value === locale) {

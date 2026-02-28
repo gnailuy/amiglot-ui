@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
+import { buildLanguageSelectOptions } from "@/i18n/language-options";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -109,43 +110,6 @@ function buildOptions(values: string[], type: "language" | "region"): Option[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function buildLanguageOptions(values: string[]): Option[] {
-  const locale =
-    typeof navigator !== "undefined" && navigator.language
-      ? navigator.language
-      : "en";
-  const display = new Intl.DisplayNames([locale], { type: "language" });
-  const resolveLabel = (value: string) => {
-    try {
-      return display.of(value);
-    } catch {
-      try {
-        return display.of(value.replace(/_/g, "-"));
-      } catch {
-        return undefined;
-      }
-    }
-  };
-  return values
-    .map((value) => {
-      const label = resolveLabel(value);
-      if (!label) {
-        return null;
-      }
-      const normalizedValue = value.replace(/_/g, "-").toLowerCase();
-      const normalizedLabel = label.toLowerCase();
-      if (
-        normalizedLabel === value.toLowerCase() ||
-        normalizedLabel === normalizedValue
-      ) {
-        return null;
-      }
-      return { value, label: `${label} (${value})` };
-    })
-    .filter((option): option is Option => Boolean(option))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
 function buildTimezoneOptions(values: string[]): Option[] {
   return values
     .map((value) => ({ value, label: value }))
@@ -165,6 +129,7 @@ function getBrowserTimezone() {
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
+  const locale = useLocale();
   const PROFICIENCY_LABELS: Record<number, string> = {
     0: t("languageLevel.zero"),
     1: t("languageLevel.beginner"),
@@ -307,10 +272,11 @@ export default function ProfilePage() {
     const normalized = DEFAULT_LANGUAGE_CODES
       .map((code) => code.toLowerCase())
       .filter((code) => code.length >= 2 && code.length <= 15);
-    return buildLanguageOptions(
+    return buildLanguageSelectOptions(
       normalized.length ? normalized : DEFAULT_LANGUAGE_CODES,
+      locale,
     );
-  }, []);
+  }, [locale]);
 
   const timezoneOptions = useMemo(() => {
     const supportedValuesOf = (Intl as unknown as {
