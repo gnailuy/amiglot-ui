@@ -26,7 +26,8 @@ export function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium uppercase text-muted-foreground">
+      <span className="sr-only">{t("language")}</span>
+      <span aria-hidden className="text-xs font-medium uppercase text-muted-foreground whitespace-nowrap shrink-0 hidden sm:inline">
         {t("language")}
       </span>
       <SmartSelect

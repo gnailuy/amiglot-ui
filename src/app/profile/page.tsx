@@ -861,7 +861,7 @@ export default function ProfilePage() {
                       >
                         <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                           <div className="space-y-2">
-                            <Label className="whitespace-nowrap">{t("languageLabel")}</Label>
+                            <Label className="whitespace-nowrap w-max inline-flex">{t("languageLabel")}</Label>
                             <SmartSelect
                               value={language.language_code}
                               options={languageOptions}
