@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildLanguageSelectOptions } from "@/i18n/language-options";
 
 describe("buildLanguageSelectOptions", () => {
-  it("filters entries without proper display names", () => {
+  it("keeps entries without proper display names at the bottom", () => {
     const original = Intl.DisplayNames;
     class MockDisplayNames {
       of(value: string) {
@@ -25,6 +25,7 @@ describe("buildLanguageSelectOptions", () => {
     const options = buildLanguageSelectOptions(["pt-BR", "aa"], "en");
     expect(options).toEqual([
       { value: "pt-BR", label: "Portuguese (pt-BR)" },
+      { value: "aa", label: "aa (aa)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
@@ -143,7 +144,7 @@ describe("buildLanguageSelectOptions", () => {
     });
   });
 
-  it("drops entries when display names cannot be resolved", () => {
+  it("keeps entries when display names cannot be resolved", () => {
     const original = Intl.DisplayNames;
     class MockDisplayNames {
       of() {
@@ -157,7 +158,9 @@ describe("buildLanguageSelectOptions", () => {
     });
 
     const options = buildLanguageSelectOptions(["pt-BR"], "en");
-    expect(options).toEqual([]);
+    expect(options).toEqual([
+      { value: "pt-BR", label: "pt-BR (pt-BR)" },
+    ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
       value: original,
@@ -165,7 +168,7 @@ describe("buildLanguageSelectOptions", () => {
     });
   });
 
-  it("filters out entries where label matches code (redundant display)", () => {
+  it("keeps entries where label matches code (redundant display)", () => {
     const original = Intl.DisplayNames;
     class MockDisplayNames {
       of(value: string) {
@@ -180,7 +183,9 @@ describe("buildLanguageSelectOptions", () => {
     });
 
     const options = buildLanguageSelectOptions(["en"], "en");
-    expect(options).toEqual([]);
+    expect(options).toEqual([
+      { value: "en", label: "en (en)" },
+    ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
       value: original,
@@ -188,7 +193,7 @@ describe("buildLanguageSelectOptions", () => {
     });
   });
 
-  it("filters out entries where label matches lowercased code", () => {
+  it("keeps entries where label matches lowercased code", () => {
     const original = Intl.DisplayNames;
     class MockDisplayNames {
       of(value: string) {
@@ -202,7 +207,9 @@ describe("buildLanguageSelectOptions", () => {
     });
 
     const options = buildLanguageSelectOptions(["EN"], "en");
-    expect(options).toEqual([]);
+    expect(options).toEqual([
+      { value: "EN", label: "en (EN)" },
+    ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
       value: original,

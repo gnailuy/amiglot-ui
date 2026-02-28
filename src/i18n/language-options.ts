@@ -23,7 +23,8 @@ export function buildLanguageSelectOptions(
 ): LanguageOption[] {
   const display = getDisplayNames(locale);
   const normalized = new Set<string>();
-  const options: LanguageOption[] = [];
+  const namedOptions: LanguageOption[] = [];
+  const fallbackOptions: LanguageOption[] = [];
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
@@ -36,6 +37,7 @@ export function buildLanguageSelectOptions(
     normalized.add(normalizedCode);
 
     let label: string | undefined;
+    let hasProperDisplayName = true;
 
     if (display) {
       try {
@@ -50,10 +52,8 @@ export function buildLanguageSelectOptions(
     }
 
     if (!label) {
-      if (display) {
-        return;
-      }
       label = normalizedCode;
+      hasProperDisplayName = false;
     }
 
     if (display) {
@@ -63,15 +63,30 @@ export function buildLanguageSelectOptions(
         normalizedLabel === normalizedValue ||
         normalizedLabel === value.toLowerCase()
       ) {
-        return;
+        hasProperDisplayName = false;
       }
+    } else {
+      hasProperDisplayName = false;
     }
 
-    options.push({
+    const option = {
       value: normalizedCode,
       label: `${label} (${normalizedCode})`,
-    });
+    };
+
+    if (hasProperDisplayName) {
+      namedOptions.push(option);
+    } else {
+      fallbackOptions.push(option);
+    }
   });
 
-  return options.sort((a, b) => a.label.localeCompare(b.label));
+  const sortedNamed = namedOptions.sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
+  const sortedFallback = fallbackOptions.sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
+
+  return [...sortedNamed, ...sortedFallback];
 }
