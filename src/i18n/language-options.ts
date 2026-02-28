@@ -27,6 +27,9 @@ export function buildLanguageSelectOptions(
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
+    if (normalizedCode.toLowerCase() === "und") {
+      return;
+    }
     if (normalized.has(normalizedCode)) {
       return;
     }

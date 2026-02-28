@@ -57,6 +57,34 @@ describe("buildLanguageSelectOptions", () => {
     });
   });
 
+  it("filters out the root locale (und)", () => {
+    const original = Intl.DisplayNames;
+    class MockDisplayNames {
+      of(value: string) {
+        if (value === "und") {
+          return "root";
+        }
+        if (value === "en") {
+          return "English";
+        }
+        return value;
+      }
+    }
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: MockDisplayNames,
+      configurable: true,
+    });
+
+    const options = buildLanguageSelectOptions(["und", "en"], "en");
+    expect(options).toEqual([{ value: "en", label: "English (en)" }]);
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: original,
+      configurable: true,
+    });
+  });
+
   it("falls back when Intl.DisplayNames is unavailable", () => {
     const original = Intl.DisplayNames;
     const hadOwn = Object.prototype.hasOwnProperty.call(Intl, "DisplayNames");
