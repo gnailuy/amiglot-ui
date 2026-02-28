@@ -72,7 +72,9 @@ export function buildLanguageSelectOptions(
 ): LanguageOption[] {
   const display = getDisplayNames(locale);
   const normalized = new Set<string>();
-  const options: LanguageOption[] = [];
+  const options: Array<
+    LanguageOption & { sortLabel: string; hasDisplayName: boolean }
+  > = [];
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
@@ -85,26 +87,37 @@ export function buildLanguageSelectOptions(
     normalized.add(normalizedCode);
 
     const label = resolveDisplayLabel(value, normalizedCode, display);
+    const hasDisplayName = label !== normalizedCode;
 
     options.push({
       value: normalizedCode,
       label: `${label} (${normalizedCode})`,
+      sortLabel: label,
+      hasDisplayName,
     });
   });
 
   const collator = getCollator(locale);
-  options.sort((a, b) =>
-    collator ? collator.compare(a.label, b.label) : a.label.localeCompare(b.label),
-  );
+  const withDisplayNames = options    .filter((option) => option.hasDisplayName)    .sort((a, b) =>
+      collator
+        ? collator.compare(a.sortLabel, b.sortLabel)
+        : a.sortLabel.localeCompare(b.sortLabel),
+    );
+  const withoutDisplayNames = options    .filter((option) => !option.hasDisplayName)    .sort((a, b) => a.value.localeCompare(b.value));
 
-  return options;
+  return [...withDisplayNames, ...withoutDisplayNames].map(({ value, label }) => ({
+    value,
+    label,
+  }));
 }
 
 export function buildLanguageSwitcherOptions(
   values: string[],
 ): LanguageOption[] {
   const normalized = new Set<string>();
-  const options: LanguageOption[] = [];
+  const options: Array<
+    LanguageOption & { hasDisplayName: boolean }
+  > = [];
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
@@ -118,14 +131,20 @@ export function buildLanguageSwitcherOptions(
 
     const display = getDisplayNames(normalizedCode);
     const label = resolveDisplayLabel(value, normalizedCode, display);
+    const hasDisplayName = label !== normalizedCode;
 
     options.push({
       value: normalizedCode,
       label: `${label} (${normalizedCode})`,
+      hasDisplayName,
     });
   });
 
-  options.sort((a, b) => a.value.localeCompare(b.value));
+  const withDisplayNames = options    .filter((option) => option.hasDisplayName)    .sort((a, b) => a.value.localeCompare(b.value));
+  const withoutDisplayNames = options    .filter((option) => !option.hasDisplayName)    .sort((a, b) => a.value.localeCompare(b.value));
 
-  return options;
+  return [...withDisplayNames, ...withoutDisplayNames].map(({ value, label }) => ({
+    value,
+    label,
+  }));
 }
