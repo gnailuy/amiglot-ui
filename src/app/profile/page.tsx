@@ -140,14 +140,35 @@ function resolveTimezoneOffsetMinutes(timeZone: string) {
 }
 
 function resolveTimezoneDisplayName(timeZone: string, locale: string) {
+  const fallback = timeZone.split("/").pop()?.replace(/_/g, " ") ?? timeZone;
   try {
     const display = new Intl.DisplayNames([locale], {
       type: "timeZone" as Intl.DisplayNamesOptions["type"],
+      fallback: "none",
     });
-    return display.of(timeZone) ?? timeZone;
+    const name = display.of(timeZone);
+    if (name) {
+      return name;
+    }
   } catch {
-    return timeZone.split("/").pop()?.replace(/_/g, " ") ?? timeZone;
+    // Ignore and fall back to the parsed city name.
   }
+  try {
+    const formatter = new Intl.DateTimeFormat(locale, {
+      timeZone,
+      timeZoneName: "longGeneric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const parts = formatter.formatToParts(new Date());
+    const tzName = parts.find((part) => part.type === "timeZoneName")?.value;
+    if (tzName && !/^(UTC|GMT)/i.test(tzName)) {
+      return tzName;
+    }
+  } catch {
+    // Ignore and fall back to the parsed city name.
+  }
+  return fallback;
 }
 
 function buildTimezoneOptions(values: string[], locale: string): Option[] {
