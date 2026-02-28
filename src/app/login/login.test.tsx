@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import messages from "@/i18n/messages/en.json";
 import LoginPage from "./page";
 
 const postJson = vi.fn();
@@ -18,13 +20,20 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+const renderWithIntl = (ui: React.ReactElement) =>
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+
 describe("LoginPage", () => {
   beforeEach(() => {
     postJson.mockReset();
   });
 
   it("renders basic form validation attributes", () => {
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
 
     const input = screen.getByLabelText(/email address/i);
     expect(input).toHaveAttribute("required");
@@ -34,7 +43,7 @@ describe("LoginPage", () => {
   it("submits email and shows success message", async () => {
     postJson.mockResolvedValue({ ok: true });
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
 
     await userEvent.type(screen.getByLabelText(/email address/i), "user@test.com");
     await userEvent.click(screen.getByRole("button", { name: /send magic link/i }));
@@ -46,7 +55,7 @@ describe("LoginPage", () => {
   it("shows dev login link when provided", async () => {
     postJson.mockResolvedValue({ ok: true, dev_login_url: "http://dev-link" });
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
 
     await userEvent.type(screen.getByLabelText(/email address/i), "user@test.com");
     await userEvent.click(screen.getByRole("button", { name: /send magic link/i }));
@@ -61,7 +70,7 @@ describe("LoginPage", () => {
   it("shows error message on failure", async () => {
     postJson.mockRejectedValue(new Error("nope"));
 
-    render(<LoginPage />);
+    renderWithIntl(<LoginPage />);
 
     await userEvent.type(screen.getByLabelText(/email address/i), "user@test.com");
     await userEvent.click(screen.getByRole("button", { name: /send magic link/i }));

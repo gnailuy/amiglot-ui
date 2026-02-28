@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+
 import styles from "./page.module.css";
 import { clearAccessToken, clearUserId, getAccessToken } from "@/lib/session";
 
 export default function Home() {
+  const t = useTranslations("home");
   const [token, setToken] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -27,34 +30,30 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <h1 className={styles.title}>Amiglot</h1>
-        <p className={styles.subtitle}>
-          Find language partners. Learn together.
-        </p>
+        <h1 className={styles.title}>{t("title")}</h1>
+        <p className={styles.subtitle}>{t("subtitle")}</p>
         {!isMounted ? (
           <div className={styles.session}>
             <div className={styles.spinner} aria-hidden="true" />
-            <span className={styles.srOnly}>
-              Checking your sign-in status...
-            </span>
+            <span className={styles.srOnly}>{t("checking")}</span>
           </div>
         ) : token ? (
           <div className={styles.session}>
-            <p>You&apos;re signed in.</p>
+            <p>{t("signedIn")}</p>
             <div className={styles.actions}>
               <Link className={styles.primary} href="/profile">
-                Complete your profile
+                {t("completeProfile")}
               </Link>
               <button className={styles.secondary} onClick={onSignOut}>
-                Sign out
+                {t("signOut")}
               </button>
             </div>
           </div>
         ) : (
           <div className={styles.session}>
-            <p>You&apos;re not signed in yet.</p>
+            <p>{t("signedOut")}</p>
             <Link className={styles.primary} href="/login">
-              Sign in with magic link
+              {t("signIn")}
             </Link>
           </div>
         )}

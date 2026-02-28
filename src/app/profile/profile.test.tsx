@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import userEvent from "@testing-library/user-event";
 import React from "react";
+import messages from "@/i18n/messages/en.json";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ProfilePage from "./page";
@@ -133,6 +135,13 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+const renderWithIntl = (ui: React.ReactElement) =>
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+
 describe("ProfilePage", () => {
   beforeEach(() => {
     getJson.mockReset();
@@ -150,7 +159,7 @@ describe("ProfilePage", () => {
     getAccessToken.mockReturnValue(null);
     getUserId.mockReturnValue(null);
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     expect(screen.getByText(/need to sign in/i)).toBeInTheDocument();
   });
@@ -160,7 +169,7 @@ describe("ProfilePage", () => {
     getUserId.mockReturnValue("user-1");
     getJson.mockReturnValue(new Promise(() => {}));
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     expect(await screen.findByText(/loading your profile/i)).toBeInTheDocument();
   });
@@ -185,7 +194,7 @@ describe("ProfilePage", () => {
       availability: [],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     expect(await screen.findByText(/profile setup/i)).toBeInTheDocument();
   });
@@ -222,7 +231,7 @@ describe("ProfilePage", () => {
       ],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     await screen.findByText(/profile setup/i);
     await userEvent.clear(screen.getByPlaceholderText("arturo"));
@@ -294,7 +303,7 @@ describe("ProfilePage", () => {
       });
     putJson.mockResolvedValue({});
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     await screen.findByText(/profile setup/i);
     await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
@@ -393,7 +402,7 @@ describe("ProfilePage", () => {
       });
     putJson.mockResolvedValue({});
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     await waitFor(() =>
       expect(screen.queryByText(/loading your profile/i)).not.toBeInTheDocument(),
@@ -449,7 +458,7 @@ describe("ProfilePage", () => {
     });
     putJson.mockRejectedValueOnce(new Error("save boom"));
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     await screen.findByText(/profile setup/i);
     await userEvent.click(screen.getByRole("button", { name: /save profile/i }));
@@ -492,7 +501,7 @@ describe("ProfilePage", () => {
       })
       .mockResolvedValueOnce({ available: true });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     await screen.findByText(/profile setup/i);
     const handleInput = screen.getByPlaceholderText("arturo");
@@ -536,7 +545,7 @@ describe("ProfilePage", () => {
       ],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
     await user.click(screen.getByRole("tab", { name: /language/i }));
@@ -557,7 +566,7 @@ describe("ProfilePage", () => {
     getUserId.mockReturnValue("user-1");
     getJson.mockRejectedValueOnce(new Error("boom"));
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     expect(await screen.findByText(/boom/)).toBeInTheDocument();
   });
@@ -568,7 +577,7 @@ describe("ProfilePage", () => {
     const ApiError = (await import("@/lib/api")).ApiError;
     getJson.mockRejectedValueOnce(new ApiError("not found", 404));
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
 
     await screen.findByText(/profile setup/i);
     expect(screen.queryByText(/could not load/i)).not.toBeInTheDocument();
@@ -607,7 +616,7 @@ describe("ProfilePage", () => {
       ],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
     await selectComboboxOption(user, screen.getByLabelText(/timezone/i), "Select timezone");
@@ -649,7 +658,7 @@ describe("ProfilePage", () => {
       ],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
     const handleInput = screen.getByPlaceholderText("arturo");
@@ -694,7 +703,7 @@ describe("ProfilePage", () => {
       ],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
     await user.click(screen.getByRole("tab", { name: /language/i }));
@@ -743,14 +752,14 @@ describe("ProfilePage", () => {
       ],
     });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
     const handleInput = screen.getByPlaceholderText("arturo");
     await user.clear(handleInput);
     await user.type(handleInput, "ab");
 
-    expect(await screen.findByText(/handle must be 3–20/i)).toBeInTheDocument();
+    expect(await screen.findByText(/handle must be 3[-–]20/i)).toBeInTheDocument();
   });
 
   it("shows handle unavailable status", async () => {
@@ -788,7 +797,7 @@ describe("ProfilePage", () => {
       })
       .mockResolvedValueOnce({ available: false });
 
-    render(<ProfilePage />);
+    renderWithIntl(<ProfilePage />);
     await screen.findByText(/profile setup/i);
 
     const handleInput = screen.getByPlaceholderText("arturo");

@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+
 import { postJson } from "@/lib/api";
 import { setAccessToken, setUserId } from "@/lib/session";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +22,7 @@ type VerifyCardProps = {
 };
 
 function VerifyCard({ status, message }: VerifyCardProps) {
+  const t = useTranslations("verify");
   const statusStyles = useMemo(() => {
     if (status === "error") {
       return "bg-destructive/10 text-destructive";
@@ -37,10 +40,8 @@ function VerifyCard({ status, message }: VerifyCardProps) {
       <div className="mx-auto flex w-full max-w-lg flex-col justify-center">
         <Card className="border-muted/60 shadow-sm">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl">Magic link verification</CardTitle>
-            <CardDescription>
-              We&apos;re validating your secure sign-in link.
-            </CardDescription>
+            <CardTitle className="text-2xl">{t("title")}</CardTitle>
+            <CardDescription>{t("description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className={`rounded-md px-4 py-3 text-sm ${statusStyles}`} data-state={status}>
@@ -49,7 +50,7 @@ function VerifyCard({ status, message }: VerifyCardProps) {
           </CardContent>
           <CardFooter>
             <Link className="text-sm text-muted-foreground hover:text-foreground" href="/">
-              Go to home
+              {t("goHome")}
             </Link>
           </CardFooter>
         </Card>
@@ -59,15 +60,14 @@ function VerifyCard({ status, message }: VerifyCardProps) {
 }
 
 function VerifyPageContent() {
+  const t = useTranslations("verify");
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<StatusState>(() =>
     token ? "loading" : "error",
   );
   const [message, setMessage] = useState<string>(() =>
-    token
-      ? "Verifying your link..."
-      : "Missing token. Please request a new magic link.",
+    token ? t("verifying") : t("missingToken"),
   );
 
   useEffect(() => {
@@ -80,26 +80,23 @@ function VerifyPageContent() {
         setAccessToken(data.access_token);
         setUserId(data.user.id);
         setStatus("success");
-        setMessage("You're signed in. Welcome back!");
+        setMessage(t("welcome"));
       })
       .catch((error) => {
         setStatus("error");
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "We could not verify this link.",
-        );
+        setMessage(error instanceof Error ? error.message : t("invalidLink"));
       });
-  }, [token]);
+  }, [token, t]);
 
   return <VerifyCard status={status} message={message} />;
 }
 
 export default function VerifyPage() {
+  const t = useTranslations("verify");
   return (
     <Suspense
       fallback={
-        <VerifyCard status="loading" message="Verifying your link..." />
+        <VerifyCard status="loading" message={t("verifying")} />
       }
     >
       <VerifyPageContent />
