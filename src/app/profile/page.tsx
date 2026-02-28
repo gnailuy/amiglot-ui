@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { getTimeZones } from "@vvo/tzdb";
 
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
@@ -117,28 +118,6 @@ function formatOffsetLabel(totalMinutes: number) {
   return `UTC${sign}${paddedHours}:${paddedMinutes}`;
 }
 
-function resolveTimezoneOffsetMinutes(timeZone: string) {
-  try {
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      timeZoneName: "shortOffset",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    const parts = formatter.formatToParts(new Date());
-    const offsetPart = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT";
-    const match = offsetPart.match(/([+-]\d{1,2})(?::?(\d{2}))?/);
-    if (!match) {
-      return 0;
-    }
-    const hours = Number.parseInt(match[1], 10);
-    const minutes = match[2] ? Number.parseInt(match[2], 10) : 0;
-    return hours * 60 + Math.sign(hours || 1) * minutes;
-  } catch {
-    return 0;
-  }
-}
-
 function resolveTimezoneDisplayName(timeZone: string, locale: string) {
   const fallback = timeZone.split("/").pop()?.replace(/_/g, " ") ?? timeZone;
   try {
@@ -171,37 +150,18 @@ function resolveTimezoneDisplayName(timeZone: string, locale: string) {
   return fallback;
 }
 
-function resolveTimezoneCityName(timeZone: string) {
-  const segments = timeZone.split("/");
-  if (segments.length < 2) {
-    return null;
-  }
-  const rawCity = segments[segments.length - 1];
-  if (!rawCity) {
-    return null;
-  }
-  const city = rawCity.replace(/_/g, " ");
-  if (/^(UTC|GMT|UCT|ETC)$/i.test(city)) {
-    return null;
-  }
-  return city;
-}
-
-function buildTimezoneOptions(values: string[], locale: string): Option[] {
+function buildTimezoneOptions(locale: string): Option[] {
   const collator = new Intl.Collator([locale], { sensitivity: "base" });
-  return values
-    .map((value) => {
-      const offsetMinutes = resolveTimezoneOffsetMinutes(value);
-      const offsetLabel = formatOffsetLabel(offsetMinutes);
-      const displayName = resolveTimezoneDisplayName(value, locale);
-      const cityName = resolveTimezoneCityName(value);
-      const normalizedDisplay = displayName.toLocaleLowerCase(locale);
-      const normalizedCity = cityName?.toLocaleLowerCase(locale);
-      const showCity = cityName && !normalizedDisplay.includes(normalizedCity ?? "");
+  return getTimeZones({ includeUtc: true })
+    .map((timeZone) => {
+      const offsetLabel = formatOffsetLabel(timeZone.currentTimeOffsetInMinutes);
+      const displayName = resolveTimezoneDisplayName(timeZone.name, locale);
+      const cities = timeZone.mainCities?.slice(0, 3).filter(Boolean) ?? [];
+      const cityLabel = cities.length ? ` (${cities.join(", ")})` : "";
       return {
-        value,
-        label: `(${offsetLabel}) ${displayName}${showCity ? ` (${cityName})` : ""}`,
-        offsetMinutes,
+        value: timeZone.name,
+        label: `(${offsetLabel}) ${displayName}${cityLabel}`,
+        offsetMinutes: timeZone.currentTimeOffsetInMinutes,
       };
     })
     .sort((a, b) => {
@@ -379,30 +339,7 @@ export default function ProfilePage() {
     );
   }, [locale]);
 
-  const timezoneOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as {
-      supportedValuesOf?: (key: string) => string[];
-    }).supportedValuesOf;
-    let timezones = [
-      "America/Vancouver",
-      "UTC",
-      "America/New_York",
-      "Europe/London",
-    ];
-    if (typeof supportedValuesOf === "function") {
-      try {
-        timezones = supportedValuesOf("timeZone");
-      } catch {
-        timezones = [
-          "America/Vancouver",
-          "UTC",
-          "America/New_York",
-          "Europe/London",
-        ];
-      }
-    }
-    return buildTimezoneOptions(timezones, locale);
-  }, [locale]);
+  const timezoneOptions = useMemo(() => buildTimezoneOptions(locale), [locale]);
 
   useEffect(() => {
     const tokenValue = getAccessToken();
