@@ -171,6 +171,22 @@ function resolveTimezoneDisplayName(timeZone: string, locale: string) {
   return fallback;
 }
 
+function resolveTimezoneCityName(timeZone: string) {
+  const segments = timeZone.split("/");
+  if (segments.length < 2) {
+    return null;
+  }
+  const rawCity = segments[segments.length - 1];
+  if (!rawCity) {
+    return null;
+  }
+  const city = rawCity.replace(/_/g, " ");
+  if (/^(UTC|GMT|UCT|ETC)$/i.test(city)) {
+    return null;
+  }
+  return city;
+}
+
 function buildTimezoneOptions(values: string[], locale: string): Option[] {
   const collator = new Intl.Collator([locale], { sensitivity: "base" });
   return values
@@ -178,9 +194,13 @@ function buildTimezoneOptions(values: string[], locale: string): Option[] {
       const offsetMinutes = resolveTimezoneOffsetMinutes(value);
       const offsetLabel = formatOffsetLabel(offsetMinutes);
       const displayName = resolveTimezoneDisplayName(value, locale);
+      const cityName = resolveTimezoneCityName(value);
+      const normalizedDisplay = displayName.toLocaleLowerCase(locale);
+      const normalizedCity = cityName?.toLocaleLowerCase(locale);
+      const showCity = cityName && !normalizedDisplay.includes(normalizedCity ?? "");
       return {
         value,
-        label: `(${offsetLabel}) ${displayName}`,
+        label: `(${offsetLabel}) ${displayName}${showCity ? ` (${cityName})` : ""}`,
         offsetMinutes,
       };
     })
