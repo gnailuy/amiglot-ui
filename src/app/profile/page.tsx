@@ -861,7 +861,7 @@ export default function ProfilePage() {
                       >
                         <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                           <div className="space-y-2">
-                            <Label>{t("languageLabel")}</Label>
+                            <Label className="whitespace-nowrap">{t("languageLabel")}</Label>
                             <SmartSelect
                               value={language.language_code}
                               options={languageOptions}
@@ -1034,7 +1034,7 @@ export default function ProfilePage() {
                               ))}
                             </ToggleGroup>
                           </div>
-                          <div className="grid gap-3 md:grid-cols-[1fr_1fr_2fr_auto]">
+                          <div className="grid gap-3 md:grid-cols-[1fr_1fr_minmax(0,2fr)_auto]">
                             <div className="space-y-2">
                               <Label>{t("startLabel")}</Label>
                               <Input
@@ -1065,7 +1065,7 @@ export default function ProfilePage() {
                                 }}
                               />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 min-w-0">
                               <Label>{t("availabilityTimezoneLabel")}</Label>
                               <SmartSelect
                                 value={slot.timezone || timezone}
