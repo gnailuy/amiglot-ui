@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildLanguageSelectOptions } from "@/i18n/language-options";
+import {
+  buildLanguageSelectOptions,
+  buildLanguageSwitcherOptions,
+} from "@/i18n/language-options";
 
 describe("buildLanguageSelectOptions", () => {
-  it("keeps entries without proper display names at the bottom", () => {
+  it("sorts entries with Intl.Collator", () => {
     const original = Intl.DisplayNames;
     class MockDisplayNames {
       of(value: string) {
@@ -24,8 +27,8 @@ describe("buildLanguageSelectOptions", () => {
 
     const options = buildLanguageSelectOptions(["pt-BR", "aa"], "en");
     expect(options).toEqual([
-      { value: "pt-BR", label: "Portuguese (pt-BR)" },
       { value: "aa", label: "aa (aa)" },
+      { value: "pt-BR", label: "Portuguese (pt-BR)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
@@ -183,9 +186,7 @@ describe("buildLanguageSelectOptions", () => {
     });
 
     const options = buildLanguageSelectOptions(["en"], "en");
-    expect(options).toEqual([
-      { value: "en", label: "en (en)" },
-    ]);
+    expect(options).toEqual([{ value: "en", label: "en (en)" }]);
 
     Object.defineProperty(Intl, "DisplayNames", {
       value: original,
@@ -207,8 +208,43 @@ describe("buildLanguageSelectOptions", () => {
     });
 
     const options = buildLanguageSelectOptions(["EN"], "en");
+    expect(options).toEqual([{ value: "EN", label: "EN (EN)" }]);
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: original,
+      configurable: true,
+    });
+  });
+});
+
+describe("buildLanguageSwitcherOptions", () => {
+  it("uses endonyms and sorts by code", () => {
+    const original = Intl.DisplayNames;
+    class MockDisplayNames {
+      private locale: string;
+      constructor(locales: string[]) {
+        this.locale = locales[0];
+      }
+      of(value: string) {
+        if (this.locale === "es" && value === "es") {
+          return "Español";
+        }
+        if (this.locale === "de" && value === "de") {
+          return "Deutsch";
+        }
+        return value;
+      }
+    }
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: MockDisplayNames,
+      configurable: true,
+    });
+
+    const options = buildLanguageSwitcherOptions(["es", "de"]);
     expect(options).toEqual([
-      { value: "EN", label: "en (EN)" },
+      { value: "de", label: "Deutsch (de)" },
+      { value: "es", label: "Español (es)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {

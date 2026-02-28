@@ -5,7 +5,9 @@ export type LanguageOption = {
   label: string;
 };
 
-function getDisplayNames(locale: string) {
+type DisplayNames = Intl.DisplayNames | null;
+
+function getDisplayNames(locale: string): DisplayNames {
   if (typeof Intl === "undefined" || !("DisplayNames" in Intl)) {
     return null;
   }
@@ -17,14 +19,60 @@ function getDisplayNames(locale: string) {
   }
 }
 
+function resolveDisplayLabel(
+  value: string,
+  normalizedCode: string,
+  display: DisplayNames,
+): string {
+  let label: string | undefined;
+
+  if (display) {
+    try {
+      label = display.of(normalizedCode) ?? display.of(value) ?? undefined;
+    } catch {
+      try {
+        label = display.of(value.replace(/_/g, "-")) ?? undefined;
+      } catch {
+        label = undefined;
+      }
+    }
+  }
+
+  if (!label) {
+    return normalizedCode;
+  }
+
+  const normalizedLabel = label.toLowerCase();
+  const normalizedValue = normalizedCode.toLowerCase();
+  if (
+    normalizedLabel === normalizedValue ||
+    normalizedLabel === value.toLowerCase()
+  ) {
+    return normalizedCode;
+  }
+
+  return label;
+}
+
+function getCollator(locale: string) {
+  if (typeof Intl === "undefined" || !("Collator" in Intl)) {
+    return null;
+  }
+
+  try {
+    return new Intl.Collator(locale, { sensitivity: "base" });
+  } catch {
+    return null;
+  }
+}
+
 export function buildLanguageSelectOptions(
   values: string[],
   locale: string,
 ): LanguageOption[] {
   const display = getDisplayNames(locale);
   const normalized = new Set<string>();
-  const namedOptions: LanguageOption[] = [];
-  const fallbackOptions: LanguageOption[] = [];
+  const options: LanguageOption[] = [];
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
@@ -36,57 +84,48 @@ export function buildLanguageSelectOptions(
     }
     normalized.add(normalizedCode);
 
-    let label: string | undefined;
-    let hasProperDisplayName = true;
+    const label = resolveDisplayLabel(value, normalizedCode, display);
 
-    if (display) {
-      try {
-        label = display.of(normalizedCode) ?? display.of(value) ?? undefined;
-      } catch {
-        try {
-          label = display.of(value.replace(/_/g, "-")) ?? undefined;
-        } catch {
-          label = undefined;
-        }
-      }
-    }
-
-    if (!label) {
-      label = normalizedCode;
-      hasProperDisplayName = false;
-    }
-
-    if (display) {
-      const normalizedLabel = label.toLowerCase();
-      const normalizedValue = normalizedCode.toLowerCase();
-      if (
-        normalizedLabel === normalizedValue ||
-        normalizedLabel === value.toLowerCase()
-      ) {
-        hasProperDisplayName = false;
-      }
-    } else {
-      hasProperDisplayName = false;
-    }
-
-    const option = {
+    options.push({
       value: normalizedCode,
       label: `${label} (${normalizedCode})`,
-    };
-
-    if (hasProperDisplayName) {
-      namedOptions.push(option);
-    } else {
-      fallbackOptions.push(option);
-    }
+    });
   });
 
-  const sortedNamed = namedOptions.sort((a, b) =>
-    a.label.localeCompare(b.label),
-  );
-  const sortedFallback = fallbackOptions.sort((a, b) =>
-    a.label.localeCompare(b.label),
+  const collator = getCollator(locale);
+  options.sort((a, b) =>
+    collator ? collator.compare(a.label, b.label) : a.label.localeCompare(b.label),
   );
 
-  return [...sortedNamed, ...sortedFallback];
+  return options;
+}
+
+export function buildLanguageSwitcherOptions(
+  values: string[],
+): LanguageOption[] {
+  const normalized = new Set<string>();
+  const options: LanguageOption[] = [];
+
+  values.forEach((value) => {
+    const normalizedCode = normalizeLocale(value);
+    if (normalizedCode.toLowerCase() === "und") {
+      return;
+    }
+    if (normalized.has(normalizedCode)) {
+      return;
+    }
+    normalized.add(normalizedCode);
+
+    const display = getDisplayNames(normalizedCode);
+    const label = resolveDisplayLabel(value, normalizedCode, display);
+
+    options.push({
+      value: normalizedCode,
+      label: `${label} (${normalizedCode})`,
+    });
+  });
+
+  options.sort((a, b) => a.value.localeCompare(b.value));
+
+  return options;
 }
