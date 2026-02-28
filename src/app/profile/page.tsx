@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { getTimeZones } from "@vvo/tzdb";
 
 import { ApiError, getJson, putJson } from "@/lib/api";
 import { getAccessToken, getUserId } from "@/lib/session";
@@ -85,12 +86,9 @@ const HANDLE_MAX_LENGTH = 20;
 const BIRTH_YEAR_MIN = 1900;
 const UNSET_SELECT_VALUE = "__unset__";
 
-function buildOptions(values: string[], type: "language" | "region"): Option[] {
-  const locale =
-    typeof navigator !== "undefined" && navigator.language
-      ? navigator.language
-      : "en";
+function buildOptions(values: string[], type: "language" | "region", locale: string): Option[] {
   const display = new Intl.DisplayNames([locale], { type });
+  const collator = new Intl.Collator([locale], { sensitivity: "base" });
   const resolveLabel = (value: string) => {
     try {
       return display.of(value) ?? value;
@@ -107,13 +105,75 @@ function buildOptions(values: string[], type: "language" | "region"): Option[] {
       value,
       label: `${resolveLabel(value)} (${value})`,
     }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => collator.compare(a.label, b.label));
 }
 
-function buildTimezoneOptions(values: string[]): Option[] {
-  return values
-    .map((value) => ({ value, label: value }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+function formatOffsetLabel(totalMinutes: number) {
+  const sign = totalMinutes >= 0 ? "+" : "-";
+  const absMinutes = Math.abs(totalMinutes);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = absMinutes % 60;
+  const paddedHours = String(hours).padStart(2, "0");
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  return `UTC${sign}${paddedHours}:${paddedMinutes}`;
+}
+
+function resolveTimezoneDisplayName(timeZone: string, locale: string) {
+  const fallback = timeZone.split("/").pop()?.replace(/_/g, " ") ?? timeZone;
+  try {
+    const display = new Intl.DisplayNames([locale], {
+      type: "timeZone" as Intl.DisplayNamesOptions["type"],
+      fallback: "none",
+    });
+    const name = display.of(timeZone);
+    if (name) {
+      return name;
+    }
+  } catch {
+    // Ignore and fall back to the parsed city name.
+  }
+  try {
+    const formatter = new Intl.DateTimeFormat(locale, {
+      timeZone,
+      timeZoneName: "longGeneric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const parts = formatter.formatToParts(new Date());
+    const tzName = parts.find((part) => part.type === "timeZoneName")?.value;
+    if (tzName && !/^(UTC|GMT)/i.test(tzName)) {
+      return tzName;
+    }
+  } catch {
+    // Ignore and fall back to the parsed city name.
+  }
+  return fallback;
+}
+
+function buildTimezoneOptions(locale: string): Option[] {
+  const collator = new Intl.Collator([locale], { sensitivity: "base" });
+  return getTimeZones({ includeUtc: true })
+    .map((timeZone) => {
+      const offsetLabel = formatOffsetLabel(timeZone.currentTimeOffsetInMinutes);
+      const displayName = resolveTimezoneDisplayName(timeZone.name, locale);
+      const cities = timeZone.mainCities?.slice(0, 3).filter(Boolean) ?? [];
+      const cityLabel = cities.length ? ` (${cities.join(", ")})` : "";
+      return {
+        value: timeZone.name,
+        label: `(${offsetLabel}) ${displayName}${cityLabel}`,
+        offsetMinutes: timeZone.currentTimeOffsetInMinutes,
+      };
+    })
+    .sort((a, b) => {
+      if (a.offsetMinutes !== b.offsetMinutes) {
+        return a.offsetMinutes - b.offsetMinutes;
+      }
+      return collator.compare(a.label, b.label);
+    })
+    .map(({ offsetMinutes, ...option }) => {
+      void offsetMinutes;
+      return option;
+    });
 }
 
 function getBrowserTimezone() {
@@ -265,8 +325,9 @@ export default function ProfilePage() {
     return buildOptions(
       normalized.length ? normalized : DEFAULT_COUNTRY_CODES,
       "region",
+      locale,
     );
-  }, []);
+  }, [locale]);
 
   const languageOptions = useMemo(() => {
     const normalized = DEFAULT_LANGUAGE_CODES
@@ -278,30 +339,7 @@ export default function ProfilePage() {
     );
   }, [locale]);
 
-  const timezoneOptions = useMemo(() => {
-    const supportedValuesOf = (Intl as unknown as {
-      supportedValuesOf?: (key: string) => string[];
-    }).supportedValuesOf;
-    let timezones = [
-      "America/Vancouver",
-      "UTC",
-      "America/New_York",
-      "Europe/London",
-    ];
-    if (typeof supportedValuesOf === "function") {
-      try {
-        timezones = supportedValuesOf("timeZone");
-      } catch {
-        timezones = [
-          "America/Vancouver",
-          "UTC",
-          "America/New_York",
-          "Europe/London",
-        ];
-      }
-    }
-    return buildTimezoneOptions(timezones);
-  }, []);
+  const timezoneOptions = useMemo(() => buildTimezoneOptions(locale), [locale]);
 
   useEffect(() => {
     const tokenValue = getAccessToken();
@@ -312,7 +350,7 @@ export default function ProfilePage() {
       setIsMounted(true);
     });
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     if (!hasAuth) {
@@ -823,7 +861,7 @@ export default function ProfilePage() {
                       >
                         <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                           <div className="space-y-2">
-                            <Label>{t("languageLabel")}</Label>
+                            <Label className="whitespace-nowrap w-max inline-flex">{t("languageLabel")}</Label>
                             <SmartSelect
                               value={language.language_code}
                               options={languageOptions}
@@ -996,7 +1034,7 @@ export default function ProfilePage() {
                               ))}
                             </ToggleGroup>
                           </div>
-                          <div className="grid gap-3 md:grid-cols-[1fr_1fr_2fr_auto]">
+                          <div className="grid gap-3 md:grid-cols-[1fr_1fr_minmax(0,2fr)_auto]">
                             <div className="space-y-2">
                               <Label>{t("startLabel")}</Label>
                               <Input
@@ -1027,7 +1065,7 @@ export default function ProfilePage() {
                                 }}
                               />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 min-w-0">
                               <Label>{t("availabilityTimezoneLabel")}</Label>
                               <SmartSelect
                                 value={slot.timezone || timezone}

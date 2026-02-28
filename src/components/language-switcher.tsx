@@ -5,15 +5,15 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
 import { DEFAULT_LANGUAGE_CODES } from "@/config/profile-options";
-import { buildLanguageSelectOptions } from "@/i18n/language-options";
+import { buildLanguageSwitcherOptions } from "@/i18n/language-options";
 import { setLocaleCookie } from "@/i18n/locale";
 
 export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations("nav");
   const options = useMemo<SelectOption[]>(
-    () => buildLanguageSelectOptions(DEFAULT_LANGUAGE_CODES, locale),
-    [locale],
+    () => buildLanguageSwitcherOptions(DEFAULT_LANGUAGE_CODES),
+    [],
   );
 
   const onChange = (value: string) => {
@@ -26,7 +26,8 @@ export function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium uppercase text-muted-foreground">
+      <span className="sr-only">{t("language")}</span>
+      <span aria-hidden className="text-xs font-medium uppercase text-muted-foreground whitespace-nowrap shrink-0 hidden sm:inline">
         {t("language")}
       </span>
       <SmartSelect
