@@ -89,6 +89,31 @@ describe("buildLanguageSelectOptions", () => {
     });
   });
 
+  it("filters out non-language placeholders", () => {
+    const original = Intl.DisplayNames;
+    class MockDisplayNames {
+      of(value: string) {
+        return value;
+      }
+    }
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: MockDisplayNames,
+      configurable: true,
+    });
+
+    const options = buildLanguageSelectOptions(
+      ["und", "zxx", "mis", "mul", "root", "qaa", "qtz", "art", "cel", "phi", "tut", "sgn", "en"],
+      "en",
+    );
+    expect(options).toEqual([{ value: "en", label: "English (en)" }]);
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: original,
+      configurable: true,
+    });
+  });
+
   it("falls back when Intl.DisplayNames is unavailable", () => {
     const original = Intl.DisplayNames;
     const hadOwn = Object.prototype.hasOwnProperty.call(Intl, "DisplayNames");
@@ -252,4 +277,33 @@ describe("buildLanguageSwitcherOptions", () => {
       configurable: true,
     });
   });
+  it("filters out non-language placeholders for switcher", () => {
+    const original = Intl.DisplayNames;
+    class MockDisplayNames {
+      private locale: string;
+      constructor(locales: string[]) {
+        this.locale = locales[0];
+      }
+      of(value: string) {
+        if (value === "en") {
+          return "English";
+        }
+        return value;
+      }
+    }
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: MockDisplayNames,
+      configurable: true,
+    });
+
+    const options = buildLanguageSwitcherOptions(["und", "qaa", "en"]);
+    expect(options).toEqual([{ value: "en", label: "English (en)" }]);
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: original,
+      configurable: true,
+    });
+  });
 });
+

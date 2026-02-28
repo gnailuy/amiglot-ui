@@ -8,6 +8,21 @@ export type LanguageOption = {
 
 type DisplayNames = Intl.DisplayNames | null;
 
+const EXCLUDED_LANGUAGE_CODES = new Set([
+  "und",
+  "zxx",
+  "mis",
+  "mul",
+  "root",
+  "qaa",
+  "qtz",
+  "art",
+  "cel",
+  "phi",
+  "tut",
+  "sgn",
+]);
+
 function getDisplayNames(locale: string): DisplayNames {
   if (typeof Intl === "undefined" || !("DisplayNames" in Intl)) {
     return null;
@@ -92,7 +107,8 @@ export function buildLanguageSelectOptions(
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
-    if (normalizedCode.toLowerCase() === "und") {
+    const normalizedLower = normalizedCode.toLowerCase();
+    if (EXCLUDED_LANGUAGE_CODES.has(normalizedLower)) {
       return;
     }
     if (normalized.has(normalizedCode)) {
@@ -139,7 +155,8 @@ export function buildLanguageSwitcherOptions(
 
   values.forEach((value) => {
     const normalizedCode = normalizeLocale(value);
-    if (normalizedCode.toLowerCase() === "und") {
+    const normalizedLower = normalizedCode.toLowerCase();
+    if (EXCLUDED_LANGUAGE_CODES.has(normalizedLower)) {
       return;
     }
     if (normalized.has(normalizedCode)) {
