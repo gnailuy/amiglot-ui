@@ -7,17 +7,46 @@ export function normalizeLocale(locale: string) {
 }
 
 export function resolveMessageLocale(locale: string) {
-  const normalized = normalizeLocale(locale).toLowerCase();
+  const normalized = normalizeLocale(locale);
+  const lowered = normalized.toLowerCase();
 
-  if (normalized.startsWith("zh")) {
+  if (["zh-hans", "zh-cn", "zh-sg"].includes(lowered)) {
+    return "zh-Hans";
+  }
+
+  if (["zh-hant", "zh-hk", "zh-tw", "zh-mo"].includes(lowered)) {
+    return "zh-Hant";
+  }
+
+  if (lowered === "zh") {
     return "zh";
   }
 
-  if (normalized === "pt" || normalized.startsWith("pt-")) {
+  if (lowered === "pt-pt") {
+    return "pt-PT";
+  }
+
+  if (lowered === "pt-br" || lowered === "pt") {
     return "pt-BR";
   }
 
-  if (normalized.startsWith("en")) {
+  if (lowered === "en-au") {
+    return "en-AU";
+  }
+
+  if (lowered === "en-ca") {
+    return "en-CA";
+  }
+
+  if (lowered === "en-gb") {
+    return "en-GB";
+  }
+
+  if (lowered === "en-us") {
+    return "en-US";
+  }
+
+  if (lowered === "en") {
     return "en";
   }
 

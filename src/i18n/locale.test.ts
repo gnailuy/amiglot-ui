@@ -17,13 +17,13 @@ describe("i18n locale helpers", () => {
   });
 
   it("resolves message locales", () => {
-    expect(resolveMessageLocale("zh-CN")).toBe("zh");
-    expect(resolveMessageLocale("zh-Hant")).toBe("zh");
+    expect(resolveMessageLocale("zh-CN")).toBe("zh-Hans");
+    expect(resolveMessageLocale("zh-Hant")).toBe("zh-Hant");
     expect(resolveMessageLocale("pt-BR")).toBe("pt-BR");
     expect(resolveMessageLocale("pt_BR")).toBe("pt-BR");
-    expect(resolveMessageLocale("pt-PT")).toBe("pt-BR");
+    expect(resolveMessageLocale("pt-PT")).toBe("pt-PT");
     expect(resolveMessageLocale("pt")).toBe("pt-BR");
-    expect(resolveMessageLocale("en-US")).toBe("en");
+    expect(resolveMessageLocale("en-US")).toBe("en-US");
     expect(resolveMessageLocale("fr-FR")).toBe("en");
   });
 

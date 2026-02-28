@@ -3,7 +3,18 @@ import { DEFAULT_LANGUAGE_CODES } from "@/config/profile-options";
 import { normalizeLocale } from "@/i18n/locale";
 
 export const DEFAULT_LOCALE = "en";
-export const TRANSLATED_LOCALES = ["en", "zh", "pt-BR"] as const;
+export const TRANSLATED_LOCALES = [
+  "en",
+  "en-AU",
+  "en-CA",
+  "en-GB",
+  "en-US",
+  "zh",
+  "zh-Hans",
+  "zh-Hant",
+  "pt-BR",
+  "pt-PT",
+] as const;
 
 const normalizedLocales = DEFAULT_LANGUAGE_CODES.map(normalizeLocale).concat(DEFAULT_LOCALE);
 
