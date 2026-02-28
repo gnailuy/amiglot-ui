@@ -27,8 +27,8 @@ describe("buildLanguageSelectOptions", () => {
 
     const options = buildLanguageSelectOptions(["pt-BR", "aa"], "en");
     expect(options).toEqual([
+      { value: "aa", label: "Afar (aa)" },
       { value: "pt-BR", label: "Portuguese (pt-BR)" },
-      { value: "aa", label: "aa (aa)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
@@ -104,7 +104,7 @@ describe("buildLanguageSelectOptions", () => {
     }
 
     const options = buildLanguageSelectOptions(["en"], "en");
-    expect(options).toEqual([{ value: "en", label: "en (en)" }]);
+    expect(options).toEqual([{ value: "en", label: "English (en)" }]);
 
     if (hadOwn) {
       Object.defineProperty(Intl, "DisplayNames", {
@@ -162,7 +162,7 @@ describe("buildLanguageSelectOptions", () => {
 
     const options = buildLanguageSelectOptions(["pt-BR"], "en");
     expect(options).toEqual([
-      { value: "pt-BR", label: "pt-BR (pt-BR)" },
+      { value: "pt-BR", label: "Brazilian Portuguese (pt-BR)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
@@ -186,7 +186,7 @@ describe("buildLanguageSelectOptions", () => {
     });
 
     const options = buildLanguageSelectOptions(["en"], "en");
-    expect(options).toEqual([{ value: "en", label: "en (en)" }]);
+    expect(options).toEqual([{ value: "en", label: "English (en)" }]);
 
     Object.defineProperty(Intl, "DisplayNames", {
       value: original,

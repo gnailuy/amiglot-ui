@@ -1,4 +1,5 @@
 import { normalizeLocale } from "@/i18n/locale";
+import { ENGLISH_LANGUAGE_NAMES } from "@/i18n/english-language-names";
 
 export type LanguageOption = {
   value: string;
@@ -17,6 +18,28 @@ function getDisplayNames(locale: string): DisplayNames {
   } catch {
     return null;
   }
+}
+
+function isRedundantLabel(label: string, value: string, normalizedCode: string) {
+  const normalizedLabel = label.toLowerCase();
+  const normalizedValue = normalizedCode.toLowerCase();
+  return (
+    normalizedLabel === normalizedValue ||
+    normalizedLabel === value.toLowerCase()
+  );
+}
+
+function resolveEnglishFallback(normalizedCode: string) {
+  const fallback = ENGLISH_LANGUAGE_NAMES[normalizedCode];
+  if (!fallback) {
+    return normalizedCode;
+  }
+
+  if (fallback.toLowerCase() === normalizedCode.toLowerCase()) {
+    return normalizedCode;
+  }
+
+  return fallback;
 }
 
 function resolveDisplayLabel(
@@ -38,17 +61,8 @@ function resolveDisplayLabel(
     }
   }
 
-  if (!label) {
-    return normalizedCode;
-  }
-
-  const normalizedLabel = label.toLowerCase();
-  const normalizedValue = normalizedCode.toLowerCase();
-  if (
-    normalizedLabel === normalizedValue ||
-    normalizedLabel === value.toLowerCase()
-  ) {
-    return normalizedCode;
+  if (!label || isRedundantLabel(label, value, normalizedCode)) {
+    return resolveEnglishFallback(normalizedCode);
   }
 
   return label;
@@ -98,12 +112,16 @@ export function buildLanguageSelectOptions(
   });
 
   const collator = getCollator(locale);
-  const withDisplayNames = options    .filter((option) => option.hasDisplayName)    .sort((a, b) =>
+  const withDisplayNames = options
+    .filter((option) => option.hasDisplayName)
+    .sort((a, b) =>
       collator
         ? collator.compare(a.sortLabel, b.sortLabel)
         : a.sortLabel.localeCompare(b.sortLabel),
     );
-  const withoutDisplayNames = options    .filter((option) => !option.hasDisplayName)    .sort((a, b) => a.value.localeCompare(b.value));
+  const withoutDisplayNames = options
+    .filter((option) => !option.hasDisplayName)
+    .sort((a, b) => a.value.localeCompare(b.value));
 
   return [...withDisplayNames, ...withoutDisplayNames].map(({ value, label }) => ({
     value,
@@ -140,8 +158,12 @@ export function buildLanguageSwitcherOptions(
     });
   });
 
-  const withDisplayNames = options    .filter((option) => option.hasDisplayName)    .sort((a, b) => a.value.localeCompare(b.value));
-  const withoutDisplayNames = options    .filter((option) => !option.hasDisplayName)    .sort((a, b) => a.value.localeCompare(b.value));
+  const withDisplayNames = options
+    .filter((option) => option.hasDisplayName)
+    .sort((a, b) => a.value.localeCompare(b.value));
+  const withoutDisplayNames = options
+    .filter((option) => !option.hasDisplayName)
+    .sort((a, b) => a.value.localeCompare(b.value));
 
   return [...withDisplayNames, ...withoutDisplayNames].map(({ value, label }) => ({
     value,
