@@ -1,14 +1,14 @@
 # Amiglot UI — End-to-End Test Plan
 
 ## 1. Scope
-End-to-end coverage for the current UI feature set, focusing on user-visible flows and API integration.
+End-to-end coverage for the current UI feature set: authentication, session handling, and profile setup (profile details, languages, availability).
 
 ## 2. Test Environment
 - UI: Next.js dev server (`npm run dev -- --hostname 127.0.0.1 --port 3000`)
 - API: local dev container on port 6176
 - DB: local Postgres (dev)
 - Base URL: `https://test.gnailuy.com` (proxy to local UI)
-- Localization: ensure `Accept-Language` is set by the UI
+- Localization: UI sets `Accept-Language` for API requests
 
 ## 3. Test Data
 - Use fresh email addresses per run: `test+<timestamp>@gnailuy.com`
@@ -16,56 +16,44 @@ End-to-end coverage for the current UI feature set, focusing on user-visible flo
 - Seed languages: English (native), Spanish (target)
 
 ## 4. Authentication & Session
-1. Request magic link from login screen.
-2. Confirm dev-mode magic link flow opens and creates a session.
-3. Verify session persists on refresh.
-4. Logout and verify protected pages redirect to login.
-5. Invalid/expired magic link shows an error state.
+1. From Home, navigate to Login.
+2. Submit magic link request and see success state.
+3. In dev mode, open `dev_login_url` and verify success message.
+4. Verify access token + user id persisted; Home shows signed-in state.
+5. Sign out from Home clears session and returns to signed-out state.
+6. Invalid/expired magic link shows error state on Verify page.
 
-## 5. Profile Setup
-1. Create profile with required fields (handle, timezone, country).
-2. Handle uniqueness check validates and displays errors.
-3. Enforce “at least one native language” requirement.
-4. Update profile fields and verify persisted values on reload.
+## 5. Profile Load & Save
+1. Open Profile page and confirm initial loading state.
+2. Profile fetch populates email, handle, timezone, and discoverable badge.
+3. Handle availability check runs for new handles and shows available/unavailable state.
+4. Attempt save with invalid fields (handle length/characters, missing timezone) shows validation and disables save.
+5. Successful save updates profile, languages, and availability in sequence and shows success banner.
 
-## 6. Languages Management
-1. Add native + target languages.
-2. Edit a language level and description.
-3. Remove a language and verify list updates.
-4. Validate errors for missing/invalid levels.
+## 6. Languages Tab
+1. Add a language with level + description; update to target language.
+2. Remove a language; ensure list never becomes empty.
+3. Validate language errors:
+   - Missing language code
+   - Duplicate language codes
+   - No native language
 
-## 7. Availability
-1. Add weekly availability slots.
-2. Edit a slot and verify summary updates.
-3. Remove a slot and confirm persisted state.
-4. Validate start < end; reject invalid slots.
+## 7. Availability Tab
+1. Add availability slot with multiple weekdays.
+2. Edit time range; ensure start < end validation.
+3. Remove a slot; ensure list never becomes empty.
+4. Validate timezone selection (slot timezone overrides profile timezone).
 
-## 8. Discovery & Matching
-1. Run search with filters (target language, min level, age range, country).
-2. Validate empty state when no matches.
-3. Send a match request with a message.
-4. Confirm request appears in outgoing list.
+## 8. Internationalization (i18n)
+1. Load UI in a non-default locale (if supported) and verify translated labels for Login and Profile.
+2. Confirm API errors are localized based on `Accept-Language`.
 
-## 9. Match Requests & Messaging
-1. As recipient, view incoming request.
-2. Send pre-accept message.
-3. Accept request and confirm match is created.
-4. Open match chat and exchange messages.
-5. Decline request flow shows expected UI state.
-6. Close match and verify it disappears from active list.
+## 9. Error & Edge States
+1. Simulate API error (500) on profile load; verify error banner.
+2. Simulate API error on save; verify error banner and no silent failures.
+3. Network offline: show error banner and preserve inputs.
 
-## 10. Internationalization (i18n)
-1. Switch UI language (if language selector exists) and verify translations.
-2. Validate no hardcoded strings for key views.
-3. Confirm locale-sensitive formatting (dates/times) matches selected locale.
-
-## 11. Error & Edge States
-1. Simulate API error (500) and verify error banner/toast.
-2. Network offline: show retry/empty state.
-3. Unauthorized API response redirects to login.
-4. Rate-limit response displays user-friendly error.
-
-## 12. Regression Checklist
-- Page load performance for main routes.
+## 10. Regression Checklist
+- Page load performance for Home, Login, Verify, Profile.
 - Forms remain responsive on slow network.
 - No console errors on primary flows.
