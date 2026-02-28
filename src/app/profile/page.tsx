@@ -169,7 +169,10 @@ function buildTimezoneOptions(values: string[], locale: string): Option[] {
       }
       return collator.compare(a.label, b.label);
     })
-    .map(({ offsetMinutes: _offsetMinutes, ...option }) => option);
+    .map(({ offsetMinutes, ...option }) => {
+      void offsetMinutes;
+      return option;
+    });
 }
 
 function getBrowserTimezone() {
