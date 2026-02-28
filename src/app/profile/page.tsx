@@ -85,12 +85,9 @@ const HANDLE_MAX_LENGTH = 20;
 const BIRTH_YEAR_MIN = 1900;
 const UNSET_SELECT_VALUE = "__unset__";
 
-function buildOptions(values: string[], type: "language" | "region"): Option[] {
-  const locale =
-    typeof navigator !== "undefined" && navigator.language
-      ? navigator.language
-      : "en";
+function buildOptions(values: string[], type: "language" | "region", locale: string): Option[] {
   const display = new Intl.DisplayNames([locale], { type });
+  const collator = new Intl.Collator([locale], { sensitivity: "base" });
   const resolveLabel = (value: string) => {
     try {
       return display.of(value) ?? value;
@@ -107,13 +104,72 @@ function buildOptions(values: string[], type: "language" | "region"): Option[] {
       value,
       label: `${resolveLabel(value)} (${value})`,
     }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => collator.compare(a.label, b.label));
 }
 
-function buildTimezoneOptions(values: string[]): Option[] {
+function formatOffsetLabel(totalMinutes: number) {
+  const sign = totalMinutes >= 0 ? "+" : "-";
+  const absMinutes = Math.abs(totalMinutes);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = absMinutes % 60;
+  const paddedHours = String(hours).padStart(2, "0");
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  return `UTC${sign}${paddedHours}:${paddedMinutes}`;
+}
+
+function resolveTimezoneOffsetMinutes(timeZone: string) {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "shortOffset",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const parts = formatter.formatToParts(new Date());
+    const offsetPart = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT";
+    const match = offsetPart.match(/([+-]\d{1,2})(?::?(\d{2}))?/);
+    if (!match) {
+      return 0;
+    }
+    const hours = Number.parseInt(match[1], 10);
+    const minutes = match[2] ? Number.parseInt(match[2], 10) : 0;
+    return hours * 60 + Math.sign(hours || 1) * minutes;
+  } catch {
+    return 0;
+  }
+}
+
+function resolveTimezoneDisplayName(timeZone: string, locale: string) {
+  try {
+    const display = new Intl.DisplayNames([locale], {
+      type: "timeZone" as Intl.DisplayNamesOptions["type"],
+    });
+    return display.of(timeZone) ?? timeZone;
+  } catch {
+    return timeZone.split("/").pop()?.replace(/_/g, " ") ?? timeZone;
+  }
+}
+
+function buildTimezoneOptions(values: string[], locale: string): Option[] {
+  const collator = new Intl.Collator([locale], { sensitivity: "base" });
   return values
-    .map((value) => ({ value, label: value }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .map((value) => {
+      const offsetMinutes = resolveTimezoneOffsetMinutes(value);
+      const offsetLabel = formatOffsetLabel(offsetMinutes);
+      const displayName = resolveTimezoneDisplayName(value, locale);
+      return {
+        value,
+        label: `(${offsetLabel}) ${displayName}`,
+        offsetMinutes,
+      };
+    })
+    .sort((a, b) => {
+      if (a.offsetMinutes !== b.offsetMinutes) {
+        return a.offsetMinutes - b.offsetMinutes;
+      }
+      return collator.compare(a.label, b.label);
+    })
+    .map(({ offsetMinutes: _offsetMinutes, ...option }) => option);
 }
 
 function getBrowserTimezone() {
@@ -265,8 +321,9 @@ export default function ProfilePage() {
     return buildOptions(
       normalized.length ? normalized : DEFAULT_COUNTRY_CODES,
       "region",
+      locale,
     );
-  }, []);
+  }, [locale]);
 
   const languageOptions = useMemo(() => {
     const normalized = DEFAULT_LANGUAGE_CODES
@@ -300,8 +357,8 @@ export default function ProfilePage() {
         ];
       }
     }
-    return buildTimezoneOptions(timezones);
-  }, []);
+    return buildTimezoneOptions(timezones, locale);
+  }, [locale]);
 
   useEffect(() => {
     const tokenValue = getAccessToken();
@@ -312,7 +369,7 @@ export default function ProfilePage() {
       setIsMounted(true);
     });
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     if (!hasAuth) {
