@@ -18,15 +18,20 @@ describe("i18n locale helpers", () => {
 
   it("resolves message locales", () => {
     expect(resolveMessageLocale("zh-CN")).toBe("zh");
+    expect(resolveMessageLocale("zh-Hant")).toBe("zh");
     expect(resolveMessageLocale("pt-BR")).toBe("pt-BR");
     expect(resolveMessageLocale("pt_BR")).toBe("pt-BR");
+    expect(resolveMessageLocale("pt-PT")).toBe("pt-BR");
+    expect(resolveMessageLocale("pt")).toBe("pt-BR");
     expect(resolveMessageLocale("en-US")).toBe("en");
     expect(resolveMessageLocale("fr-FR")).toBe("en");
   });
 
   it("checks translated locales", () => {
     expect(isTranslatedLocale("zh-Hans")).toBe(true);
+    expect(isTranslatedLocale("zh-Hant")).toBe(true);
     expect(isTranslatedLocale("pt-BR")).toBe(true);
+    expect(isTranslatedLocale("pt-PT")).toBe(true);
     expect(isTranslatedLocale("en-GB")).toBe(true);
     expect(isTranslatedLocale("fr-FR")).toBe(true);
   });

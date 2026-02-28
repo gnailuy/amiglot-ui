@@ -13,7 +13,7 @@ export function resolveMessageLocale(locale: string) {
     return "zh";
   }
 
-  if (normalized === "pt-br" || normalized.startsWith("pt-br")) {
+  if (normalized === "pt" || normalized.startsWith("pt-")) {
     return "pt-BR";
   }
 
