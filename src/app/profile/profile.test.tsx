@@ -759,7 +759,7 @@ describe("ProfilePage", () => {
     await user.clear(handleInput);
     await user.type(handleInput, "ab");
 
-    expect(await screen.findByText(/handle must be 3–20/i)).toBeInTheDocument();
+    expect(await screen.findByText(/handle must be 3[-–]20/i)).toBeInTheDocument();
   });
 
   it("shows handle unavailable status", async () => {
