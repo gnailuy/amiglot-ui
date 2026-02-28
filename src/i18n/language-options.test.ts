@@ -305,5 +305,40 @@ describe("buildLanguageSwitcherOptions", () => {
       configurable: true,
     });
   });
+
+  it("limits the switcher to ISO 639-1 languages", () => {
+    const original = Intl.DisplayNames;
+    class MockDisplayNames {
+      private locale: string;
+      constructor(locales: string[]) {
+        this.locale = locales[0];
+      }
+      of(value: string) {
+        if (value === "es") {
+          return "Español";
+        }
+        if (value === "pt") {
+          return "Português";
+        }
+        return value;
+      }
+    }
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: MockDisplayNames,
+      configurable: true,
+    });
+
+    const options = buildLanguageSwitcherOptions(["pt-BR", "pt", "es-419", "es", "ace"]);
+    expect(options).toEqual([
+      { value: "es", label: "Español (es)" },
+      { value: "pt", label: "Português (pt)" },
+    ]);
+
+    Object.defineProperty(Intl, "DisplayNames", {
+      value: original,
+      configurable: true,
+    });
+  });
 });
 
