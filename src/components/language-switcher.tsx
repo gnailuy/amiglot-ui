@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
@@ -12,6 +12,7 @@ export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations("nav");
   const router = useRouter();
+  const pathname = usePathname();
 
   const options = useMemo<SelectOption[]>(() => {
     const normalized = new Set<string>();
@@ -50,7 +51,7 @@ export function LanguageSwitcher() {
 
   const onChange = (value: string) => {
     setLocaleCookie(value);
-    router.refresh();
+    router.replace(pathname || "/");
   };
 
   return (
