@@ -317,8 +317,14 @@ describe("buildLanguageSwitcherOptions", () => {
         if (value === "es") {
           return "Español";
         }
+        if (value === "es-419") {
+          return "Español (Latinoamérica)";
+        }
         if (value === "pt") {
           return "Português";
+        }
+        if (value === "pt-BR") {
+          return "Português (Brasil)";
         }
         return value;
       }
@@ -332,7 +338,9 @@ describe("buildLanguageSwitcherOptions", () => {
     const options = buildLanguageSwitcherOptions(["pt-BR", "pt", "es-419", "es", "ace"]);
     expect(options).toEqual([
       { value: "es", label: "Español (es)" },
+      { value: "es-419", label: "Español (Latinoamérica) (es-419)" },
       { value: "pt", label: "Português (pt)" },
+      { value: "pt-BR", label: "Português (Brasil) (pt-BR)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {

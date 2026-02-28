@@ -178,7 +178,8 @@ export function buildLanguageSwitcherOptions(
     if (EXCLUDED_LANGUAGE_CODES.has(normalizedLower)) {
       return;
     }
-    if (!ISO_639_1_CODES.has(normalizedLower)) {
+    const primarySubtag = normalizedLower.split("-")[0];
+    if (!ISO_639_1_CODES.has(primarySubtag)) {
       return;
     }
     if (normalized.has(normalizedCode)) {
