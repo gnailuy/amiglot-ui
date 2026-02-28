@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { SmartSelect, type SelectOption } from "@/components/ui/smart-select";
@@ -11,9 +10,6 @@ import { normalizeLocale, setLocaleCookie } from "@/i18n/locale";
 export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations("nav");
-  const router = useRouter();
-  const pathname = usePathname();
-
   const options = useMemo<SelectOption[]>(() => {
     const normalized = new Set<string>();
     const localeNames =
@@ -50,8 +46,11 @@ export function LanguageSwitcher() {
   }, [locale]);
 
   const onChange = (value: string) => {
+    if (value === locale) {
+      return;
+    }
     setLocaleCookie(value);
-    router.replace(pathname || "/");
+    window.location.reload();
   };
 
   return (
