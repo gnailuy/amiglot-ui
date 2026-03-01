@@ -55,13 +55,13 @@ function SearchableSelect({
 }: Omit<SmartSelectProps, "longListThreshold">) {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
-  const [activeValue, setActiveValue] = React.useState(selected?.label ?? "");
+  const [activeValue, setActiveValue] = React.useState(selected?.value ?? "");
 
   React.useEffect(() => {
     if (open) {
-      setActiveValue(selected?.label ?? "");
+      setActiveValue(selected?.value ?? "");
     }
-  }, [open, selected?.label]);
+  }, [open, selected?.value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -92,7 +92,8 @@ function SearchableSelect({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label}
+                  value={option.value}
+                  keywords={[option.label]}
                   onSelect={() => {
                     onValueChange(option.value);
                     setOpen(false);
