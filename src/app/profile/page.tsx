@@ -803,7 +803,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <Label htmlFor="country">{t("countryLabel")}</Label>
                       <SmartSelect
                         id="country"
@@ -814,7 +814,7 @@ export default function ProfilePage() {
                         searchPlaceholder={t("countryPlaceholder")}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <Label htmlFor="timezone">
                         {t("timezoneLabel")} <span className="text-destructive">*</span>
                       </Label>
