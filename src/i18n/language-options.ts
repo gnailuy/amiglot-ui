@@ -187,8 +187,7 @@ export function buildLanguageSwitcherOptions(
     }
     normalized.add(normalizedCode);
 
-    const display = getDisplayNames(normalizedCode);
-    const label = resolveDisplayLabel(value, normalizedCode, display);
+    const label = resolveEnglishFallback(normalizedCode);
     const hasDisplayName = label !== normalizedCode;
 
     options.push({
