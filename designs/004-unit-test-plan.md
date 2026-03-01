@@ -1,3 +1,8 @@
+---
+description: "Unit test plan for Amiglot UI."
+whenToUse: "Read when adding or updating UI unit tests and ensuring coverage."
+---
+
 # Amiglot UI — Unit Test Plan
 
 ## 1. Purpose

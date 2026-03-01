@@ -1,3 +1,8 @@
+---
+description: "Frontend architecture and coding standards for Amiglot UI."
+whenToUse: "Read when designing UI structure, component boundaries, forms/state handling, styling, or i18n."
+---
+
 # Amiglot UI — Architecture & Coding Guidelines
 
 ## 0. Scope

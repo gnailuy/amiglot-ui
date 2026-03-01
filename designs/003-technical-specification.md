@@ -1,3 +1,8 @@
+---
+description: "Frontend technical specification for Amiglot UI."
+whenToUse: "Read when implementing UI features or aligning with frontend technical decisions."
+---
+
 # Amiglot — Technical Specification (UI)
 
 ## 1. Product Constraints (shared)
