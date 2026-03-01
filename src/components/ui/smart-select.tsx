@@ -63,18 +63,26 @@ function SearchableSelect({
     if (!list) {
       return;
     }
-    const selectedItem = list.querySelector(
-      "[data-selected=\"true\"]",
-    ) as HTMLElement | null;
+    if (!selected) {
+      return;
+    }
+    const escape = (value: string) =>
+      typeof window !== "undefined" && "CSS" in window && typeof window.CSS?.escape === "function"
+        ? window.CSS.escape(value)
+        : value.replace(/\"/g, "\\\"");
+    const selector = `[data-value=\"${escape(selected.value)}\"]`;
+    const selectedItem = list.querySelector(selector) as HTMLElement | null;
     if (!selectedItem) {
       return;
     }
-    const listRect = list.getBoundingClientRect();
-    const itemRect = selectedItem.getBoundingClientRect();
-    const offset =
-      itemRect.top - listRect.top - listRect.height / 2 + itemRect.height / 2;
-    list.scrollTop += offset;
-  }, []);
+    const nextScrollTop =
+      selectedItem.offsetTop - list.clientHeight / 2 + selectedItem.clientHeight / 2;
+    const clampedScrollTop = Math.max(
+      0,
+      Math.min(nextScrollTop, list.scrollHeight - list.clientHeight),
+    );
+    list.scrollTop = clampedScrollTop;
+  }, [selected]);
 
   React.useEffect(() => {
     if (open) {
@@ -108,7 +116,7 @@ function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+      <PopoverContent className="w-[--radix-popover-trigger-width] max-w-[var(--radix-popover-content-available-width)] p-0">
         <Command loop value={activeValue} onValueChange={setActiveValue}>
           <CommandInput
             autoFocus
