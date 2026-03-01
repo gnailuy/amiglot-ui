@@ -1,16 +1,12 @@
 # Amiglot — Technical Specification (UI)
 
-## 1. Technical Constraints
-**Frontend (UI)**
-- Next.js 16.1.6, React 19.2.3, TypeScript 5.x
-- ESLint + Prettier, strict lint/typecheck/build in CI
-
-**Product constraints (shared)**
+## 1. Product Constraints (shared)
 - Day-1 multi-language support for all UI and user-facing API messages.
 - V1 auth via magic link (dev mode: local link generation when `ENV=dev`).
 - Profile: unique handle (letters/numbers/underscore), stored **without** `@` and case-insensitive; UI displays with `@` prefix.
 - Avoid gender; store birth year + month only, derive age on the fly.
 
+> Frontend technical constraints and coding standards live in `designs/000-architecture-guidelines.md`.
 > Backend technical design (DB schema, queries, migrations) lives in the API repo:
 > `amiglot-api/designs/001-technical-specification.md`.
 
