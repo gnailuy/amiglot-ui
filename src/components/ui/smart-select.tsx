@@ -56,12 +56,41 @@ function SearchableSelect({
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
   const [activeValue, setActiveValue] = React.useState(selected?.value ?? "");
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollActiveItemIntoView = React.useCallback(() => {
+    const list = listRef.current;
+    if (!list) {
+      return;
+    }
+    const selectedItem = list.querySelector(
+      "[data-selected=\"true\"]",
+    ) as HTMLElement | null;
+    if (!selectedItem) {
+      return;
+    }
+    const listRect = list.getBoundingClientRect();
+    const itemRect = selectedItem.getBoundingClientRect();
+    const offset =
+      itemRect.top - listRect.top - listRect.height / 2 + itemRect.height / 2;
+    list.scrollTop += offset;
+  }, []);
 
   React.useEffect(() => {
     if (open) {
       setActiveValue(selected?.value ?? "");
     }
   }, [open, selected?.value]);
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      scrollActiveItemIntoView();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, activeValue, scrollActiveItemIntoView]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -86,7 +115,7 @@ function SearchableSelect({
             placeholder={searchPlaceholder}
             aria-label={searchAriaLabel}
           />
-          <CommandList>
+          <CommandList ref={listRef}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
