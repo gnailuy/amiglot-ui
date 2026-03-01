@@ -15,6 +15,29 @@ type MagicLinkResponse = {
   dev_login_url?: string;
 };
 
+
+const getDevLoginUrl = (url: string | undefined | null) => {
+  if (!url) {
+    return null;
+  }
+
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appBaseUrl) {
+    return url;
+  }
+
+  try {
+    const loginUrl = new URL(url);
+    const baseUrl = new URL(appBaseUrl);
+    loginUrl.protocol = baseUrl.protocol;
+    loginUrl.host = baseUrl.host;
+    loginUrl.port = baseUrl.port;
+    return loginUrl.toString();
+  } catch {
+    return url;
+  }
+};
+
 export default function LoginPage() {
   const t = useTranslations("login");
   const [email, setEmail] = useState("");
@@ -39,7 +62,7 @@ export default function LoginPage() {
       setMessage(t("success"));
 
       if (data.dev_login_url) {
-        setDevLink(data.dev_login_url);
+        setDevLink(getDevLoginUrl(data.dev_login_url));
       }
     } catch (error) {
       setStatus("error");

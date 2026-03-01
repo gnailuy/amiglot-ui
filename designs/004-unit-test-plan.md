@@ -25,9 +25,16 @@ Establish a unit testing baseline for the UI repo and outline the priority areas
 - **Profile page (state transitions)**:
   - Tabs show validation indicators when invalid.
   - Save disabled when validation fails.
+- **i18n helpers**:
+  - Locale resolution helpers (`src/i18n/locale.ts`).
+  - Language option builders (`src/i18n/language-options.ts`).
 
 ### P2
-- **Profile helpers**: language/availability normalization logic and default state generation.
+- **Language switcher UI** (`src/components/language-switcher.tsx`): renders locale options and updates route.
+- **i18n request helpers** (`src/i18n/request.ts`): request locale detection and fallbacks.
+- **Middleware config** (`middleware.ts`): locale matcher configuration and defaults.
+- **Profile config data** (`src/config/profile-options.ts`): basic sanity checks for months/language lists.
+- **Utility helpers** (`src/lib/utils.ts`): `cn` class merge behavior.
 - **Edge UI states**: empty data states, error banners, localization fallbacks.
 
 ## 4. Test Environment Notes
@@ -39,3 +46,4 @@ Establish a unit testing baseline for the UI repo and outline the priority areas
 - ✅ Test framework installed and configured (Vitest + RTL).
 - ✅ Example test added for API helpers.
 - ✅ Page-level tests present for login, verify, and profile.
+- ✅ Locale + language option helpers covered by unit tests.
