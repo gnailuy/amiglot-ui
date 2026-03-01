@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -39,9 +40,12 @@ export default async function RootLayout({
           <div className="flex min-h-screen flex-col">
             <header className="border-b border-border/60 bg-background/80 px-4 py-3 shadow-sm backdrop-blur">
               <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
-                <span className="text-sm font-semibold uppercase tracking-wide">
+                <Link
+                  href="/"
+                  className="text-sm font-semibold uppercase tracking-wide"
+                >
                   {t("brand")}
-                </span>
+                </Link>
                 <LanguageSwitcher />
               </div>
             </header>

@@ -55,6 +55,13 @@ function SearchableSelect({
 }: Omit<SmartSelectProps, "longListThreshold">) {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
+  const [activeValue, setActiveValue] = React.useState(selected?.label ?? "");
+
+  React.useEffect(() => {
+    if (open) {
+      setActiveValue(selected?.label ?? "");
+    }
+  }, [open, selected?.label]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -73,7 +80,7 @@ function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command loop>
+        <Command loop value={activeValue} onValueChange={setActiveValue}>
           <CommandInput
             autoFocus
             placeholder={searchPlaceholder}
