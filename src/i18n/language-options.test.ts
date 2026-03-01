@@ -243,7 +243,7 @@ describe("buildLanguageSelectOptions", () => {
 });
 
 describe("buildLanguageSwitcherOptions", () => {
-  it("uses endonyms and sorts by code", () => {
+  it("uses english fallbacks for switcher labels", () => {
     const original = Intl.DisplayNames;
     class MockDisplayNames {
       private locale: string;
@@ -268,8 +268,8 @@ describe("buildLanguageSwitcherOptions", () => {
 
     const options = buildLanguageSwitcherOptions(["es", "de"]);
     expect(options).toEqual([
-      { value: "de", label: "Deutsch (de)" },
-      { value: "es", label: "Español (es)" },
+      { value: "de", label: "German (de)" },
+      { value: "es", label: "Spanish (es)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {
@@ -337,10 +337,10 @@ describe("buildLanguageSwitcherOptions", () => {
 
     const options = buildLanguageSwitcherOptions(["pt-BR", "pt", "es-419", "es", "ace"]);
     expect(options).toEqual([
-      { value: "es", label: "Español (es)" },
-      { value: "es-419", label: "Español (Latinoamérica) (es-419)" },
-      { value: "pt", label: "Português (pt)" },
-      { value: "pt-BR", label: "Português (Brasil) (pt-BR)" },
+      { value: "es", label: "Spanish (es)" },
+      { value: "es-419", label: "Latin American Spanish (es-419)" },
+      { value: "pt", label: "Portuguese (pt)" },
+      { value: "pt-BR", label: "Brazilian Portuguese (pt-BR)" },
     ]);
 
     Object.defineProperty(Intl, "DisplayNames", {

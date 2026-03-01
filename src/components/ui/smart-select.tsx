@@ -55,6 +55,50 @@ function SearchableSelect({
 }: Omit<SmartSelectProps, "longListThreshold">) {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
+  const [activeValue, setActiveValue] = React.useState(selected?.value ?? "");
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollActiveItemIntoView = React.useCallback(() => {
+    const list = listRef.current;
+    if (!list) {
+      return;
+    }
+    if (!selected) {
+      return;
+    }
+    const escape = (value: string) =>
+      typeof window !== "undefined" && "CSS" in window && typeof window.CSS?.escape === "function"
+        ? window.CSS.escape(value)
+        : value.replace(/\"/g, "\\\"");
+    const selector = `[data-value=\"${escape(selected.value)}\"]`;
+    const selectedItem = list.querySelector(selector) as HTMLElement | null;
+    if (!selectedItem) {
+      return;
+    }
+    const nextScrollTop =
+      selectedItem.offsetTop - list.clientHeight / 2 + selectedItem.clientHeight / 2;
+    const clampedScrollTop = Math.max(
+      0,
+      Math.min(nextScrollTop, list.scrollHeight - list.clientHeight),
+    );
+    list.scrollTop = clampedScrollTop;
+  }, [selected]);
+
+  React.useEffect(() => {
+    if (open) {
+      setActiveValue(selected?.value ?? "");
+    }
+  }, [open, selected?.value]);
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      scrollActiveItemIntoView();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, activeValue, scrollActiveItemIntoView]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,20 +116,21 @@ function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command loop>
+      <PopoverContent className="w-[--radix-popover-trigger-width] max-w-[var(--radix-popover-content-available-width)] p-0">
+        <Command loop value={activeValue} onValueChange={setActiveValue}>
           <CommandInput
             autoFocus
             placeholder={searchPlaceholder}
             aria-label={searchAriaLabel}
           />
-          <CommandList>
+          <CommandList ref={listRef}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label}
+                  value={option.value}
+                  keywords={[option.label]}
                   onSelect={() => {
                     onValueChange(option.value);
                     setOpen(false);
