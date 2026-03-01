@@ -1,3 +1,8 @@
+---
+description: "End-to-end test plan for Amiglot UI."
+whenToUse: "Read when running or updating UI E2E scenarios."
+---
+
 # Amiglot UI — End-to-End Test Plan
 
 ## 1. Scope

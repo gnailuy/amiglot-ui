@@ -1,3 +1,8 @@
+---
+description: "Product definition and V1 scope for Amiglot."
+whenToUse: "Read when clarifying product scope, user journeys, or core requirements."
+---
+
 # Amiglot — Production Definition (Phase 1)
 
 ## Personas

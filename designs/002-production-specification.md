@@ -1,3 +1,8 @@
+---
+description: "Detailed user stories and action paths for Amiglot V1."
+whenToUse: "Read when implementing or verifying product flows and acceptance criteria."
+---
+
 # Amiglot — Production Specification (User Stories & Paths)
 
 ## 1. User Stories (Detailed)
