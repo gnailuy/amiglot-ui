@@ -121,13 +121,20 @@ End-to-end coverage for the current UI feature set: authentication, session hand
 2. Update time range to valid start < end.
 **Expected:** Slot saved locally and remains valid.
 
-### V2. Invalid time ranges
+### V2. Grouped weekdays display
+**Setup:** Fresh account; complete A1.
+**Steps:**
+1. Create a slot that includes multiple weekdays (e.g., Mon/Wed/Fri with the same time range).
+2. Save and revisit the Availability tab.
+**Expected:** The weekdays that share the same time range are displayed together in a single block (not split into multiple blocks).
+
+### V3. Invalid time ranges
 **Setup:** Fresh account; complete A1.
 **Steps:**
 1. Set start time after end time.
 **Expected:** Validation error shown; save blocked.
 
-### V3. Remove slot edge case
+### V4. Remove slot edge case
 **Setup:** Fresh account; complete A1.
 **Steps:**
 1. Remove the only slot.
@@ -157,13 +164,15 @@ End-to-end coverage for the current UI feature set: authentication, session hand
 1. Simulate API error (500) on profile load.
 **Expected:** Error banner shown; user stays on Profile.
 
-### E2. Network offline
+### E2. API offline
 **Setup:** Fresh account; complete A1.
 **Steps:**
-1. Disable network and attempt to Save.
+1. Stop the API server.
+2. Attempt to Save.
+3. Restart the API server after the test.
 **Expected:** Error banner shown; inputs preserved.
 
 ## 10. Regression Checklist
 - No console errors on Home, Login, Verify, Profile.
-- Forms remain responsive on slow network.
+- Forms remain responsive during normal use.
 - Navigation between tabs does not reset inputs unexpectedly.
