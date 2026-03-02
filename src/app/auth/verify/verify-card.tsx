@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type StatusState = "loading" | "success" | "error";
 
 type VerifyCardProps = {
@@ -36,9 +38,9 @@ export default function VerifyCard({
             </div>
           </div>
           <div className="border-t border-muted/60 px-6 py-4">
-            <a className="text-sm text-muted-foreground hover:text-foreground" href="/">
+            <Link className="text-sm text-muted-foreground hover:text-foreground" href="/">
               {homeLabel}
-            </a>
+            </Link>
           </div>
         </div>
       </div>
