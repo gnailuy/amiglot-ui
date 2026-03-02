@@ -37,7 +37,7 @@ type SmartSelectProps = {
   emptyText?: string;
   className?: string;
   longListThreshold?: number;
-  searchAriaLabel?: string;
+// searchAriaLabel?: string;
 };
 
 const DEFAULT_LONG_LIST_THRESHOLD = 10;
@@ -51,8 +51,8 @@ function SearchableSelect({
   searchPlaceholder = "Search",
   emptyText = "No matches found.",
   className,
-  searchAriaLabel = "Search options",
-}: Omit<SmartSelectProps, "longListThreshold">) {
+// searchAriaLabel = "Search options",
+}: Omit<SmartSelectProps, "longListThreshold" | "searchAriaLabel">) {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
 
