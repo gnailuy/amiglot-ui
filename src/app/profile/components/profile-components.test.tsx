@@ -41,7 +41,6 @@ describe("Profile Components Coverage", () => {
           effectiveHandleAvailability="available"
           handleChanged={true}
           // loading removed
-          discoverable={true}
           birthYearOptions={[{ value: "2000", label: "2000" }]}
           birthMonthOptions={[{ value: "1", label: "Jan" }]}
           countryOptions={[{ value: "US", label: "United States" }]}
@@ -82,7 +81,6 @@ describe("Profile Components Coverage", () => {
           email=""
           effectiveHandleAvailability="invalid"
           handleChanged={false}
-          discoverable={null}
           birthYearOptions={[]}
           birthMonthOptions={[]}
           countryOptions={[]}
