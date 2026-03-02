@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
 
@@ -41,6 +41,7 @@ describe("Profile Components Coverage", () => {
           effectiveHandleAvailability="available"
           handleChanged={true}
           // loading removed
+          discoverable={true}
           birthYearOptions={[{ value: "2000", label: "2000" }]}
           birthMonthOptions={[{ value: "1", label: "Jan" }]}
           countryOptions={[{ value: "US", label: "United States" }]}
@@ -59,29 +60,39 @@ describe("Profile Components Coverage", () => {
   });
 
   it("ProfileDetailsSection shows error states", () => {
-    const mockRegister: any = () => ({
-      name: "test",
-      onChange: async () => {},
-      onBlur: async () => {},
-      ref: () => {},
-    });
+    const TestComponent = () => {
+      const methods = useForm<ProfileFormValues>({
+        defaultValues: {
+          handle: "testuser",
+          birthYear: "",
+          birthMonth: "",
+          countryCode: "",
+          timezone: "",
+          languages: [],
+          availability: [],
+        },
+      });
 
-    render(
-      <ProfileDetailsSection
-        t={t}
-        control={{} as any}
-        register={mockRegister}
-        errors={{ handle: { message: "Handle Error" } } as any}
-        email=""
-        effectiveHandleAvailability="invalid"
-        handleChanged={false}
-        birthYearOptions={[]}
-        birthMonthOptions={[]}
-        countryOptions={[]}
-        timezoneOptions={[]}
-        onNext={() => {}}
-      />
-    );
+      return (
+        <ProfileDetailsSection
+          t={t}
+          control={methods.control}
+          register={methods.register}
+          errors={{ handle: { message: "Handle Error", type: "custom" } } as any}
+          email=""
+          effectiveHandleAvailability="invalid"
+          handleChanged={false}
+          discoverable={null}
+          birthYearOptions={[]}
+          birthMonthOptions={[]}
+          countryOptions={[]}
+          timezoneOptions={[]}
+          onNext={() => {}}
+        />
+      );
+    };
+
+    render(<TestComponent />);
     expect(screen.getByText("Handle Error")).toBeInTheDocument();
   });
 
@@ -136,35 +147,36 @@ describe("Profile Components Coverage", () => {
   });
 
   it("ProfileLanguageSection shows errors", () => {
-    const mockRegister: any = () => ({
-      name: "test",
-      onChange: async () => {},
-      onBlur: async () => {},
-      ref: () => {},
-    });
-    
-    const methods = { 
-      control: {}, 
-      register: mockRegister, 
-      setValue: () => {} 
+    const TestComponent = () => {
+      const methods = useForm<ProfileFormValues>({
+        defaultValues: {
+          handle: "testuser",
+          birthYear: "",
+          birthMonth: "",
+          countryCode: "",
+          timezone: "",
+          languages: [],
+          availability: [],
+        },
+      });
+      return (
+        <ProfileLanguageSection
+          t={t}
+          control={methods.control}
+          register={methods.register}
+          setValue={methods.setValue}
+          languageErrorMessage="Language Error"
+          languageOptions={[]}
+          proficiencyLabels={{}}
+          languageFields={[]}
+          languages={[]}
+          onAddLanguage={() => {}}
+          onRemoveLanguage={() => {}}
+          onNext={() => {}}
+        />
+      );
     };
-
-    render(
-      <ProfileLanguageSection
-        t={t}
-        control={methods.control as any}
-        register={methods.register as any}
-        setValue={methods.setValue as any}
-        languageErrorMessage="Language Error"
-        languageOptions={[]}
-        proficiencyLabels={{}}
-        languageFields={[]}
-        languages={[]}
-        onAddLanguage={() => {}}
-        onRemoveLanguage={() => {}}
-        onNext={() => {}}
-      />
-    );
+    render(<TestComponent />);
     expect(screen.getByText("Language Error")).toBeInTheDocument();
   });
 
@@ -214,34 +226,35 @@ describe("Profile Components Coverage", () => {
   });
 
   it("ProfileAvailabilitySection shows errors", () => {
-    const mockRegister: any = () => ({
-      name: "test",
-      onChange: async () => {},
-      onBlur: async () => {},
-      ref: () => {},
-    });
-
-    const methods = { 
-      control: {}, 
-      register: mockRegister, 
-      setValue: () => {} 
+    const TestComponent = () => {
+      const methods = useForm<ProfileFormValues>({
+        defaultValues: {
+          handle: "testuser",
+          birthYear: "",
+          birthMonth: "",
+          countryCode: "",
+          timezone: "",
+          languages: [],
+          availability: [],
+        },
+      });
+      return (
+        <ProfileAvailabilitySection
+          t={t}
+          control={methods.control}
+          register={methods.register}
+          setValue={methods.setValue}
+          availabilityErrorMessage="Availability Error"
+          availabilityFields={[]}
+          availability={[]}
+          timezoneOptions={[]}
+          weekdays={[]}
+          onAddAvailability={() => {}}
+          onRemoveAvailability={() => {}}
+        />
+      );
     };
-
-    render(
-      <ProfileAvailabilitySection
-        t={t}
-        control={methods.control as any}
-        register={methods.register as any}
-        setValue={methods.setValue as any}
-        availabilityErrorMessage="Availability Error"
-        availabilityFields={[]}
-        availability={[]}
-        timezoneOptions={[]}
-        weekdays={[]}
-        onAddAvailability={() => {}}
-        onRemoveAvailability={() => {}}
-      />
-    );
+    render(<TestComponent />);
     expect(screen.getByText("Availability Error")).toBeInTheDocument();
   });
 });
