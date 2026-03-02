@@ -228,7 +228,6 @@ describe("Profile Components Coverage", () => {
 
 
   it("ProfileLanguageSection toggles target language and adjusts level", async () => {
-    let methodsRef: ReturnType<typeof useForm<ProfileFormValues>> | null = null;
     const user = userEvent.setup();
 
     const TestComponent = () => {
@@ -245,7 +244,8 @@ describe("Profile Components Coverage", () => {
           availability: [],
         },
       });
-      methodsRef = methods;
+      // eslint-disable-next-line react-hooks/incompatible-library
+      const languageValues = methods.watch("languages");
       return (
         <ProfileLanguageSection
           t={t}
@@ -255,7 +255,7 @@ describe("Profile Components Coverage", () => {
           languageOptions={[{ value: "en", label: "English" }]}
           proficiencyLabels={{ 4: "Advanced", 5: "Native" }}
           languageFields={[{ id: "1" }]}
-          languages={methods.getValues("languages")}
+          languages={languageValues}
           onAddLanguage={() => {}}
           onRemoveLanguage={() => {}}
           onNext={() => {}}
@@ -264,11 +264,14 @@ describe("Profile Components Coverage", () => {
     };
 
     render(<TestComponent />);
+    const selectTrigger = screen.getByLabelText("Language level");
+    expect(selectTrigger).toHaveTextContent("Native");
+
     const checkbox = screen.getByLabelText("targetLanguage") as HTMLInputElement;
     await user.click(checkbox);
 
-    expect(methodsRef?.getValues("languages.0.is_target")).toBe(true);
-    expect(methodsRef?.getValues("languages.0.level")).toBe(4);
+    expect(checkbox).toBeChecked();
+    expect(selectTrigger).toHaveTextContent("Advanced");
   });
 
   it("ProfileAvailabilitySection interaction", async () => {
@@ -351,7 +354,6 @@ describe("Profile Components Coverage", () => {
 
 
   it("ProfileAvailabilitySection updates weekdays", async () => {
-    let methodsRef: ReturnType<typeof useForm<ProfileFormValues>> | null = null;
     const user = userEvent.setup();
 
     const TestComponent = () => {
@@ -368,7 +370,8 @@ describe("Profile Components Coverage", () => {
           ],
         },
       });
-      methodsRef = methods;
+      // eslint-disable-next-line react-hooks/incompatible-library
+      const availabilityValues = methods.watch("availability");
       return (
         <ProfileAvailabilitySection
           t={t}
@@ -376,7 +379,7 @@ describe("Profile Components Coverage", () => {
           register={methods.register}
           setValue={methods.setValue}
           availabilityFields={[{ id: "1" }]}
-          availability={methods.getValues("availability")}
+          availability={availabilityValues}
           timezoneOptions={[{ value: "UTC", label: "UTC" }]}
           weekdays={["Sun", "Mon"]}
           onAddAvailability={() => {}}
@@ -386,8 +389,10 @@ describe("Profile Components Coverage", () => {
     };
 
     render(<TestComponent />);
-    await user.click(screen.getByLabelText("Sun"));
+    const sunToggle = screen.getByLabelText("Sun");
+    expect(sunToggle).toHaveAttribute("aria-pressed", "false");
 
-    expect(methodsRef?.getValues("availability.0.weekdays")).toEqual([0, 1]);
+    await user.click(sunToggle);
+    expect(sunToggle).toHaveAttribute("aria-pressed", "true");
   });
 });
