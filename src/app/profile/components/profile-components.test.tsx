@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { ProfileFormValues } from "../schema";
 
@@ -39,6 +40,8 @@ describe("Profile Components Coverage", () => {
           email="test@example.com"
           effectiveHandleAvailability="available"
           handleChanged={true}
+          // loading removed
+          discoverable={true}
           birthYearOptions={[{ value: "2000", label: "2000" }]}
           birthMonthOptions={[{ value: "1", label: "Jan" }]}
           countryOptions={[{ value: "US", label: "United States" }]}
@@ -56,21 +59,32 @@ describe("Profile Components Coverage", () => {
     expect(onNext).toHaveBeenCalled();
   });
 
-  it("ProfileDetailsSection shows loading", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any} register={{} as any} errors={{}} email="" effectiveHandleAvailability="idle" handleChanged={false} loading={true} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
-    expect(screen.getByText("loadingProfile")).toBeInTheDocument();
-  });
-
   it("ProfileDetailsSection shows error states", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any} register={() => ({})} errors={{ handle: { message: "Handle Error" } } as any} email="" effectiveHandleAvailability="invalid" handleChanged={false} loading={false} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
+    const mockRegister: any = () => ({
+      name: "test",
+      onChange: async () => {},
+      onBlur: async () => {},
+      ref: () => {},
+    });
+
+    render(
+      <ProfileDetailsSection
+        t={t}
+        control={{} as any}
+        register={mockRegister}
+        errors={{ handle: { message: "Handle Error" } } as any}
+        email=""
+        effectiveHandleAvailability="invalid"
+        handleChanged={false}
+        discoverable={null}
+        birthYearOptions={[]}
+        birthMonthOptions={[]}
+        countryOptions={[]}
+        timezoneOptions={[]}
+        onNext={() => {}}
+      />
+    );
     expect(screen.getByText("Handle Error")).toBeInTheDocument();
-  });
-
-
-  it("ProfileLanguageSection shows errors", () => {
-    const methods = { control: {}, register: () => {}, setValue: () => {} };
-    render(<ProfileLanguageSection t={t} control={methods.control as any} register={methods.register as any} setValue={methods.setValue as any} errors={{}} languageErrorMessage="Language Error" languageOptions={[]} proficiencyLabels={{}} languageFields={[]} languages={[]} onAddLanguage={() => {}} onRemoveLanguage={() => {}} onNext={() => {}} />);
-    expect(screen.getByText("Language Error")).toBeInTheDocument();
   });
 
   it("ProfileLanguageSection interaction", async () => {
@@ -99,6 +113,7 @@ describe("Profile Components Coverage", () => {
           control={methods.control}
           register={methods.register}
           setValue={methods.setValue}
+          // errors removed
           languageOptions={[{ value: "en", label: "English" }]}
           proficiencyLabels={{ 5: "Native" }}
           languageFields={[{ id: "1" }]}
@@ -122,21 +137,37 @@ describe("Profile Components Coverage", () => {
     expect(onNext).toHaveBeenCalled();
   });
 
-  it("ProfileDetailsSection shows loading", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any} register={{} as any} errors={{}} email="" effectiveHandleAvailability="idle" handleChanged={false} loading={true} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
-    expect(screen.getByText("loadingProfile")).toBeInTheDocument();
-  });
+  it("ProfileLanguageSection shows errors", () => {
+    const mockRegister: any = () => ({
+      name: "test",
+      onChange: async () => {},
+      onBlur: async () => {},
+      ref: () => {},
+    });
+    
+    const methods = { 
+      control: {}, 
+      register: mockRegister, 
+      setValue: () => {} 
+    };
 
-  it("ProfileDetailsSection shows error states", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any} register={() => ({})} errors={{ handle: { message: "Handle Error" } } as any} email="" effectiveHandleAvailability="invalid" handleChanged={false} loading={false} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
-    expect(screen.getByText("Handle Error")).toBeInTheDocument();
-  });
-
-
-  it("ProfileAvailabilitySection shows errors", () => {
-    const methods = { control: {}, register: () => {}, setValue: () => {} };
-    render(<ProfileAvailabilitySection t={t} control={methods.control as any} register={methods.register as any} setValue={methods.setValue as any} errors={{}} availabilityErrorMessage="Availability Error" availabilityFields={[]} availability={[]} timezoneOptions={[]} weekdays={[]} onAddAvailability={() => {}} onRemoveAvailability={() => {}} />);
-    expect(screen.getByText("Availability Error")).toBeInTheDocument();
+    render(
+      <ProfileLanguageSection
+        t={t}
+        control={methods.control as any}
+        register={methods.register as any}
+        setValue={methods.setValue as any}
+        languageErrorMessage="Language Error"
+        languageOptions={[]}
+        proficiencyLabels={{}}
+        languageFields={[]}
+        languages={[]}
+        onAddLanguage={() => {}}
+        onRemoveLanguage={() => {}}
+        onNext={() => {}}
+      />
+    );
+    expect(screen.getByText("Language Error")).toBeInTheDocument();
   });
 
   it("ProfileAvailabilitySection interaction", async () => {
@@ -164,6 +195,7 @@ describe("Profile Components Coverage", () => {
           control={methods.control}
           register={methods.register}
           setValue={methods.setValue}
+          // errors removed
           availabilityFields={[{ id: "1" }]}
           availability={methods.getValues("availability")}
           timezoneOptions={[{ value: "UTC", label: "UTC" }]}
@@ -181,5 +213,37 @@ describe("Profile Components Coverage", () => {
     
     await user.click(screen.getByText("removeButton"));
     expect(onRemove).toHaveBeenCalledWith(0);
+  });
+
+  it("ProfileAvailabilitySection shows errors", () => {
+    const mockRegister: any = () => ({
+      name: "test",
+      onChange: async () => {},
+      onBlur: async () => {},
+      ref: () => {},
+    });
+
+    const methods = { 
+      control: {}, 
+      register: mockRegister, 
+      setValue: () => {} 
+    };
+
+    render(
+      <ProfileAvailabilitySection
+        t={t}
+        control={methods.control as any}
+        register={methods.register as any}
+        setValue={methods.setValue as any}
+        availabilityErrorMessage="Availability Error"
+        availabilityFields={[]}
+        availability={[]}
+        timezoneOptions={[]}
+        weekdays={[]}
+        onAddAvailability={() => {}}
+        onRemoveAvailability={() => {}}
+      />
+    );
+    expect(screen.getByText("Availability Error")).toBeInTheDocument();
   });
 });
