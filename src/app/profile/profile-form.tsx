@@ -269,22 +269,23 @@ export default function ProfileForm({
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const [profileLoaded, setProfileLoaded] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(() => initialFetched);
+  const [message, setMessage] = useState<string | null>(() => initialError ?? null);
   const [activeTab, setActiveTab] = useState("profile");
-  const [email, setEmail] = useState("");
-  const [discoverable, setDiscoverable] = useState<boolean | null>(null);
-  const [originalHandle, setOriginalHandle] = useState("");
+  const [email, setEmail] = useState(() => initialData?.user.email ?? "");
+  const [discoverable, setDiscoverable] = useState<boolean | null>(() => initialData?.profile.discoverable ?? null);
+  const [originalHandle, setOriginalHandle] = useState(() => initialData?.profile.handle ?? "");
   const [handleAvailability, setHandleAvailability] = useState<
     "idle" | "checking" | "available" | "unavailable"
   >("idle");
 
   const defaultTimezone = useMemo(() => getBrowserTimezone(), []);
 
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(schema),
-    mode: "onChange",
-    defaultValues: {
+  const defaultFormValues = useMemo(() => {
+    if (initialFetched && initialData) {
+      return buildFormValues(initialData, defaultTimezone);
+    }
+    return {
       handle: "",
       birthYear: UNSET_SELECT_VALUE,
       birthMonth: UNSET_SELECT_VALUE,
@@ -292,7 +293,13 @@ export default function ProfileForm({
       timezone: defaultTimezone,
       languages: [DEFAULT_LANGUAGE],
       availability: [{ ...DEFAULT_AVAILABILITY, timezone: defaultTimezone }],
-    },
+    };
+  }, [initialFetched, initialData, defaultTimezone]);
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: defaultFormValues,
   });
 
   const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
@@ -407,26 +414,6 @@ export default function ProfileForm({
     });
     return () => cancelAnimationFrame(frame);
   }, [locale]);
-
-  useEffect(() => {
-    if (!initialFetched) {
-      return;
-    }
-
-    if (initialData) {
-      setEmail(initialData.user.email ?? "");
-      setOriginalHandle(initialData.profile.handle ?? "");
-      setDiscoverable(initialData.profile.discoverable ?? null);
-      setMessage(null);
-      form.reset(buildFormValues(initialData, defaultTimezone));
-    } else if (initialError) {
-      setMessage(initialError);
-    } else {
-      setMessage(null);
-    }
-
-    setProfileLoaded(true);
-  }, [initialFetched, initialData, initialError, form, defaultTimezone]);
 
   useEffect(() => {
     if (initialFetched) {
