@@ -39,7 +39,6 @@ describe("Profile Components Coverage", () => {
           errors={{}}
           email="test@example.com"
           effectiveHandleAvailability="available"
-          handleChanged={true}
           // loading removed
           birthYearOptions={[{ value: "2000", label: "2000" }]}
           birthMonthOptions={[{ value: "1", label: "Jan" }]}
@@ -80,7 +79,6 @@ describe("Profile Components Coverage", () => {
           errors={{ handle: { message: "Handle Error", type: "custom" } } as any}
           email=""
           effectiveHandleAvailability="invalid"
-          handleChanged={false}
           birthYearOptions={[]}
           birthMonthOptions={[]}
           countryOptions={[]}
