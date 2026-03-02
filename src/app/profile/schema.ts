@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const HANDLE_PATTERN = /^[a-zA-Z0-9]+$/;
+export const HANDLE_PATTERN = /^[a-zA-Z0-9_]+$/;
 export const HANDLE_MIN_LENGTH = 3;
 export const HANDLE_MAX_LENGTH = 20;
 export const BIRTH_YEAR_MIN = 1900;

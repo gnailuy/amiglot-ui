@@ -28,51 +28,13 @@ import {
   createProfileSchema,
   type ProfileFormValues,
 } from "./schema";
-
-type ProfilePayload = {
-  handle: string;
-  birth_year?: number | null;
-  birth_month?: number | null;
-  country_code?: string | null;
-  timezone: string;
-  discoverable?: boolean;
-};
-
-type LanguagePayload = {
-  language_code: string;
-  level: number;
-  is_native: boolean;
-  is_target: boolean;
-  description?: string | null;
-};
-
-type AvailabilityPayload = {
-  weekday: number;
-  start_local_time: string;
-  end_local_time: string;
-  timezone: string;
-};
-
-type AvailabilityDraft = {
-  weekdays: number[];
-  start_local_time: string;
-  end_local_time: string;
-  timezone?: string;
-};
-
-type ProfileResponse = {
-  user: {
-    id: string;
-    email: string;
-  };
-  profile: ProfilePayload;
-  languages: LanguagePayload[];
-  availability: AvailabilityPayload[];
-};
-
-type HandleCheckResponse = {
-  available: boolean;
-};
+import type {
+  AvailabilityDraft,
+  AvailabilityPayload,
+  HandleCheckResponse,
+  LanguagePayload,
+  ProfileResponse,
+} from "./profile-types";
 
 type Option = { value: string; label: string };
 
@@ -270,7 +232,17 @@ const normalizeLanguages = (values: ProfileFormValues): LanguagePayload[] =>
     };
   });
 
-export default function ProfileForm() {
+type ProfileFormProps = {
+  initialData?: ProfileResponse | null;
+  initialError?: string | null;
+  initialFetched?: boolean;
+};
+
+export default function ProfileForm({
+  initialData,
+  initialError,
+  initialFetched = false,
+}: ProfileFormProps) {
   const t = useTranslations("profile");
   const locale = useLocale();
   const schema = useMemo(() => createProfileSchema(t), [t]);
@@ -437,6 +409,29 @@ export default function ProfileForm() {
   }, [locale]);
 
   useEffect(() => {
+    if (!initialFetched) {
+      return;
+    }
+
+    if (initialData) {
+      setEmail(initialData.user.email ?? "");
+      setOriginalHandle(initialData.profile.handle ?? "");
+      setDiscoverable(initialData.profile.discoverable ?? null);
+      setMessage(null);
+      form.reset(buildFormValues(initialData, defaultTimezone));
+    } else if (initialError) {
+      setMessage(initialError);
+    } else {
+      setMessage(null);
+    }
+
+    setProfileLoaded(true);
+  }, [initialFetched, initialData, initialError, form, defaultTimezone]);
+
+  useEffect(() => {
+    if (initialFetched) {
+      return;
+    }
     if (!token || !userId) {
       return;
     }
@@ -474,7 +469,7 @@ export default function ProfileForm() {
     return () => {
       active = false;
     };
-  }, [token, userId, t, form, defaultTimezone]);
+  }, [initialFetched, token, userId, t, form, defaultTimezone]);
 
   useEffect(() => {
     void form.trigger("handle");
