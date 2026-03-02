@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
+
+import type { ProfileFormValues } from "../schema";
 
 import ProfileAvailabilitySection from "./profile-availability-section";
 import ProfileDetailsSection from "./profile-details-section";
@@ -16,13 +18,15 @@ describe("Profile Components Coverage", () => {
     const user = userEvent.setup();
 
     const TestComponent = () => {
-      const methods = useForm({
+      const methods = useForm<ProfileFormValues>({
         defaultValues: {
           handle: "testuser",
           birthYear: "",
           birthMonth: "",
           countryCode: "",
           timezone: "",
+          languages: [],
+          availability: [],
         },
       });
       return (
@@ -34,8 +38,6 @@ describe("Profile Components Coverage", () => {
           email="test@example.com"
           effectiveHandleAvailability="available"
           handleChanged={true}
-          loading={false}
-          discoverable={true}
           birthYearOptions={[{ value: "2000", label: "2000" }]}
           birthMonthOptions={[{ value: "1", label: "Jan" }]}
           countryOptions={[{ value: "US", label: "United States" }]}
@@ -60,12 +62,18 @@ describe("Profile Components Coverage", () => {
     const user = userEvent.setup();
 
     const TestComponent = () => {
-      const methods = useForm({
+      const methods = useForm<ProfileFormValues>({
         defaultValues: {
+          handle: "testuser",
+          birthYear: "",
+          birthMonth: "",
+          countryCode: "",
+          timezone: "",
           languages: [
             { language_code: "en", level: 5, is_target: false, description: "" }
-          ]
-        }
+          ],
+          availability: [],
+        },
       });
       return (
         <ProfileLanguageSection
@@ -73,7 +81,6 @@ describe("Profile Components Coverage", () => {
           control={methods.control}
           register={methods.register}
           setValue={methods.setValue}
-          errors={{}}
           languageOptions={[{ value: "en", label: "English" }]}
           proficiencyLabels={{ 5: "Native" }}
           languageFields={[{ id: "1" }]}
@@ -103,12 +110,18 @@ describe("Profile Components Coverage", () => {
     const user = userEvent.setup();
 
     const TestComponent = () => {
-      const methods = useForm({
+      const methods = useForm<ProfileFormValues>({
         defaultValues: {
+          handle: "testuser",
+          birthYear: "",
+          birthMonth: "",
+          countryCode: "",
+          timezone: "",
+          languages: [],
           availability: [
             { weekdays: [1], start_local_time: "09:00", end_local_time: "17:00", timezone: "UTC" }
-          ]
-        }
+          ],
+        },
       });
       return (
         <ProfileAvailabilitySection
@@ -116,7 +129,6 @@ describe("Profile Components Coverage", () => {
           control={methods.control}
           register={methods.register}
           setValue={methods.setValue}
-          errors={{}}
           availabilityFields={[{ id: "1" }]}
           availability={methods.getValues("availability")}
           timezoneOptions={[{ value: "UTC", label: "UTC" }]}

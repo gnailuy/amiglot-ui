@@ -37,7 +37,7 @@ type SmartSelectProps = {
   emptyText?: string;
   className?: string;
   longListThreshold?: number;
-// searchAriaLabel?: string;
+  searchAriaLabel?: string;
 };
 
 const DEFAULT_LONG_LIST_THRESHOLD = 10;
@@ -51,8 +51,8 @@ function SearchableSelect({
   searchPlaceholder = "Search",
   emptyText = "No matches found.",
   className,
-// searchAriaLabel = "Search options",
-}: Omit<SmartSelectProps, "longListThreshold" | "searchAriaLabel">) {
+  searchAriaLabel = "Search options",
+}: Omit<SmartSelectProps, "longListThreshold">) {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
 
@@ -74,7 +74,7 @@ function SearchableSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] max-w-[var(--radix-popover-content-available-width)] p-0">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput placeholder={searchPlaceholder} aria-label={searchAriaLabel} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
