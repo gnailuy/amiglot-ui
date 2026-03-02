@@ -477,11 +477,8 @@ export default function ProfileForm() {
   }, [token, userId, t, form, defaultTimezone]);
 
   useEffect(() => {
-    if (!profileLoaded) {
-      return;
-    }
     void form.trigger("handle");
-  }, [form, profileLoaded, handleValue]);
+  }, [form, handleValue]);
 
   useEffect(() => {
     if (!profileLoaded) {
