@@ -759,7 +759,7 @@ describe("ProfilePage", () => {
     await user.clear(handleInput);
     await user.type(handleInput, "ab");
 
-    expect(await screen.findByText(messages.profile.handleInvalidLength)).toBeInTheDocument();
+    expect(await screen.findByText(/Handle must be 3/)).toBeInTheDocument();
   });
 
   it("shows handle unavailable status", async () => {
