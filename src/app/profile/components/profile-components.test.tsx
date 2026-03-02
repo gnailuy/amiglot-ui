@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
@@ -56,19 +57,19 @@ describe("Profile Components Coverage", () => {
   });
 
   it("ProfileDetailsSection shows loading", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any // eslint-disable-line @typescript-eslint/no-explicit-any} register={{} as any // eslint-disable-line @typescript-eslint/no-explicit-any} errors={{}} email="" effectiveHandleAvailability="idle" handleChanged={false} loading={true} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
+    render(<ProfileDetailsSection t={t} control={{} as any} register={{} as any} errors={{}} email="" effectiveHandleAvailability="idle" handleChanged={false} loading={true} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
     expect(screen.getByText("loadingProfile")).toBeInTheDocument();
   });
 
   it("ProfileDetailsSection shows error states", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any // eslint-disable-line @typescript-eslint/no-explicit-any} register={() => ({})} errors={{ handle: { message: "Handle Error" } } as any // eslint-disable-line @typescript-eslint/no-explicit-any} email="" effectiveHandleAvailability="invalid" handleChanged={false} loading={false} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
+    render(<ProfileDetailsSection t={t} control={{} as any} register={() => ({})} errors={{ handle: { message: "Handle Error" } } as any} email="" effectiveHandleAvailability="invalid" handleChanged={false} loading={false} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
     expect(screen.getByText("Handle Error")).toBeInTheDocument();
   });
 
 
   it("ProfileLanguageSection shows errors", () => {
     const methods = { control: {}, register: () => {}, setValue: () => {} };
-    render(<ProfileLanguageSection t={t} control={methods.control as any // eslint-disable-line @typescript-eslint/no-explicit-any} register={methods.register as any // eslint-disable-line @typescript-eslint/no-explicit-any} setValue={methods.setValue as any // eslint-disable-line @typescript-eslint/no-explicit-any} errors={{}} languageErrorMessage="Language Error" languageOptions={[]} proficiencyLabels={{}} languageFields={[]} languages={[]} onAddLanguage={() => {}} onRemoveLanguage={() => {}} onNext={() => {}} />);
+    render(<ProfileLanguageSection t={t} control={methods.control as any} register={methods.register as any} setValue={methods.setValue as any} errors={{}} languageErrorMessage="Language Error" languageOptions={[]} proficiencyLabels={{}} languageFields={[]} languages={[]} onAddLanguage={() => {}} onRemoveLanguage={() => {}} onNext={() => {}} />);
     expect(screen.getByText("Language Error")).toBeInTheDocument();
   });
 
@@ -122,19 +123,19 @@ describe("Profile Components Coverage", () => {
   });
 
   it("ProfileDetailsSection shows loading", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any // eslint-disable-line @typescript-eslint/no-explicit-any} register={{} as any // eslint-disable-line @typescript-eslint/no-explicit-any} errors={{}} email="" effectiveHandleAvailability="idle" handleChanged={false} loading={true} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
+    render(<ProfileDetailsSection t={t} control={{} as any} register={{} as any} errors={{}} email="" effectiveHandleAvailability="idle" handleChanged={false} loading={true} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
     expect(screen.getByText("loadingProfile")).toBeInTheDocument();
   });
 
   it("ProfileDetailsSection shows error states", () => {
-    render(<ProfileDetailsSection t={t} control={{} as any // eslint-disable-line @typescript-eslint/no-explicit-any} register={() => ({})} errors={{ handle: { message: "Handle Error" } } as any // eslint-disable-line @typescript-eslint/no-explicit-any} email="" effectiveHandleAvailability="invalid" handleChanged={false} loading={false} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
+    render(<ProfileDetailsSection t={t} control={{} as any} register={() => ({})} errors={{ handle: { message: "Handle Error" } } as any} email="" effectiveHandleAvailability="invalid" handleChanged={false} loading={false} discoverable={null} birthYearOptions={[]} birthMonthOptions={[]} countryOptions={[]} timezoneOptions={[]} onNext={() => {}} />);
     expect(screen.getByText("Handle Error")).toBeInTheDocument();
   });
 
 
   it("ProfileAvailabilitySection shows errors", () => {
     const methods = { control: {}, register: () => {}, setValue: () => {} };
-    render(<ProfileAvailabilitySection t={t} control={methods.control as any // eslint-disable-line @typescript-eslint/no-explicit-any} register={methods.register as any // eslint-disable-line @typescript-eslint/no-explicit-any} setValue={methods.setValue as any // eslint-disable-line @typescript-eslint/no-explicit-any} errors={{}} availabilityErrorMessage="Availability Error" availabilityFields={[]} availability={[]} timezoneOptions={[]} weekdays={[]} onAddAvailability={() => {}} onRemoveAvailability={() => {}} />);
+    render(<ProfileAvailabilitySection t={t} control={methods.control as any} register={methods.register as any} setValue={methods.setValue as any} errors={{}} availabilityErrorMessage="Availability Error" availabilityFields={[]} availability={[]} timezoneOptions={[]} weekdays={[]} onAddAvailability={() => {}} onRemoveAvailability={() => {}} />);
     expect(screen.getByText("Availability Error")).toBeInTheDocument();
   });
 
