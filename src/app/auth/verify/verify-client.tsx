@@ -19,16 +19,28 @@ type StatusState = "loading" | "success" | "error";
 function VerifyPageContent() {
   const t = useTranslations("verify");
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
-  const [status, setStatus] = useState<StatusState>(() =>
-    token ? "loading" : "error",
-  );
-  const [message, setMessage] = useState<string>(() =>
-    token ? t("verifying") : t("missingToken"),
-  );
+  const [token, setToken] = useState<string | null>(null);
+  const [hasCheckedToken, setHasCheckedToken] = useState(false);
+  const [status, setStatus] = useState<StatusState>("loading");
+  const [message, setMessage] = useState<string>(() => t("verifying"));
 
   useEffect(() => {
+    const tokenValue = searchParams.get("token");
+    queueMicrotask(() => {
+      setToken(tokenValue);
+      setHasCheckedToken(true);
+    });
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!hasCheckedToken) {
+      return;
+    }
     if (!token) {
+      queueMicrotask(() => {
+        setStatus("error");
+        setMessage(t("missingToken"));
+      });
       return;
     }
 
@@ -43,7 +55,7 @@ function VerifyPageContent() {
         setStatus("error");
         setMessage(error instanceof Error ? error.message : t("invalidLink"));
       });
-  }, [token, t]);
+  }, [hasCheckedToken, token, t]);
 
   return (
     <VerifyCard

@@ -46,12 +46,12 @@ describe("VerifyPage", () => {
     useSearchParams.mockReset();
   });
 
-  it("shows missing token message when no token provided", () => {
+  it("shows missing token message when no token provided", async () => {
     useSearchParams.mockReturnValue({ get: () => null });
 
     renderWithIntl(<VerifyPage />);
 
-    expect(screen.getByText(/missing token/i)).toBeInTheDocument();
+    expect(await screen.findByText(/missing token/i)).toBeInTheDocument();
     expect(postJson).not.toHaveBeenCalled();
   });
 
