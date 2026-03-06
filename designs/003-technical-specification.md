@@ -93,11 +93,18 @@ Response:
       "level": 5,
       "is_native": true,
       "is_target": false,
-      "description": "..."
+      "description": "...",
+      "order": 1
     }
   ],
   "availability": [
-    { "weekday": 1, "start_local_time": "18:00", "end_local_time": "20:00", "timezone": "America/Vancouver" }
+    {
+      "weekday": 1,
+      "start_local_time": "18:00",
+      "end_local_time": "20:00",
+      "timezone": "America/Vancouver",
+      "order": 1
+    }
   ]
 }
 ```
@@ -138,6 +145,8 @@ Response:
 ```json
 { "languages": [ ... ] }
 ```
+Notes:
+- Include a stable integer `order` per language item to preserve user-defined ordering.
 
 ---
 ### 2.5 Availability
@@ -151,6 +160,9 @@ Response:
 ```json
 { "availability": [ ... ] }
 ```
+Notes:
+- Include a stable integer `order` per availability record to preserve user-defined ordering.
+- Records that share the same `(start_local_time, end_local_time, timezone)` should also share the same `order` so the UI can group them deterministically.
 
 ---
 ### 2.6 Discovery / Matching

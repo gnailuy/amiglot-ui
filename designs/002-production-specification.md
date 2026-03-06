@@ -13,6 +13,7 @@ whenToUse: "Read when implementing or verifying product flows and acceptance cri
 - As a learner with only one native language set, I cannot search for others or be discoverable until more language data is added.
 - As a learner, I can edit my profile fields (except email) to keep my info current.
 - As a learner, I can manage my availability (days/time blocks + timezone) so the system can surface good overlaps.
+- As a learner, I can reorder my languages and availability slots and see that order preserved after saving and reloading.
 
 **Availability definition**
 - Users select availability in their **local timezone** (days/time blocks).
