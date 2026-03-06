@@ -650,7 +650,11 @@ export default function ProfileForm({
               </div>
             ) : null}
             {message ? (
-              <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+              <div
+                className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground"
+                role="status"
+                aria-live="polite"
+              >
                 {message}
               </div>
             ) : null}

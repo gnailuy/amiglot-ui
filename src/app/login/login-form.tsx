@@ -117,6 +117,8 @@ export default function LoginForm() {
               <div
                 className={`mt-4 rounded-md px-4 py-3 text-sm ${statusStyles}`}
                 data-state={status}
+                role="status"
+                aria-live="polite"
               >
                 {message}
               </div>

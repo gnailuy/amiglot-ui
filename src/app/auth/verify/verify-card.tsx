@@ -33,7 +33,12 @@ export default function VerifyCard({
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
           <div className="px-6 py-5">
-            <div className={`rounded-md px-4 py-3 text-sm ${statusStyles}`} data-state={status}>
+            <div
+              className={`rounded-md px-4 py-3 text-sm ${statusStyles}`}
+              data-state={status}
+              role="status"
+              aria-live="polite"
+            >
               {message}
             </div>
           </div>
