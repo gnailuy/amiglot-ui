@@ -49,20 +49,25 @@ export default function ProfileAvailabilitySection({
             if (!slot) {
               return null;
             }
+            const weekdaysLabelId = `availability-${index}-weekdays`;
+            const startId = `availability-${index}-start`;
+            const endId = `availability-${index}-end`;
+            const timezoneId = `availability-${index}-timezone`;
             return (
               <div
-              key={availabilityFields[index]?.id ?? `slot-${index}`}
-              className="rounded-lg border border-border/60 p-4"
-            >
-              <div className="space-y-3">
+                key={availabilityFields[index]?.id ?? `slot-${index}`}
+                className="rounded-lg border border-border/60 p-4"
+              >
+                <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>{t("weekdaysLabel")}</Label>
+                  <Label id={weekdaysLabelId}>{t("weekdaysLabel")}</Label>
                   <Controller
                     control={control}
                     name={`availability.${index}.weekdays`}
                     render={({ field }) => (
                       <ToggleGroup
                         type="multiple"
+                        aria-labelledby={weekdaysLabelId}
                         variant="outline"
                         value={(field.value ?? []).map((day) => day.toString())}
                         onValueChange={(values) => {
@@ -84,28 +89,31 @@ export default function ProfileAvailabilitySection({
                 </div>
                 <div className="grid gap-3 md:grid-cols-[1fr_1fr_minmax(0,2fr)_auto]">
                   <div className="space-y-2">
-                    <Label>{t("startLabel")}</Label>
+                    <Label htmlFor={startId}>{t("startLabel")}</Label>
                     <Input
+                      id={startId}
                       type="time"
                       {...register(`availability.${index}.start_local_time`)}
                       value={slot.start_local_time ?? ""}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t("endLabel")}</Label>
+                    <Label htmlFor={endId}>{t("endLabel")}</Label>
                     <Input
+                      id={endId}
                       type="time"
                       {...register(`availability.${index}.end_local_time`)}
                       value={slot.end_local_time ?? ""}
                     />
                   </div>
                   <div className="space-y-2 min-w-0">
-                    <Label>{t("availabilityTimezoneLabel")}</Label>
+                    <Label htmlFor={timezoneId}>{t("availabilityTimezoneLabel")}</Label>
                     <Controller
                       control={control}
                       name={`availability.${index}.timezone`}
                       render={({ field }) => (
                         <SmartSelect
+                          id={timezoneId}
                           value={field.value ?? ""}
                           onValueChange={field.onChange}
                           options={timezoneOptions}
@@ -121,7 +129,7 @@ export default function ProfileAvailabilitySection({
                     </Button>
                   </div>
                 </div>
-              </div>
+                </div>
               </div>
             );
           })}

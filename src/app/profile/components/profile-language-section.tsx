@@ -54,19 +54,26 @@ export default function ProfileLanguageSection({
           <p className="text-sm text-destructive">{languageErrorMessage}</p>
         ) : null}
         <div className="space-y-4">
-          {languages.map((language, index) => (
-            <div
-              key={languageFields[index]?.id ?? `lang-${index}`}
-              className="rounded-lg border border-border/60 p-4"
-            >
+          {languages.map((language, index) => {
+            const languageId = `language-${index}-code`;
+            const levelId = `language-${index}-level`;
+            const descriptionId = `language-${index}-description`;
+            return (
+              <div
+                key={languageFields[index]?.id ?? `lang-${index}`}
+                className="rounded-lg border border-border/60 p-4"
+              >
               <div className="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
                 <div className="space-y-2">
-                  <Label className="whitespace-nowrap w-max inline-flex">{t("languageLabel")}</Label>
+                  <Label className="whitespace-nowrap w-max inline-flex" htmlFor={languageId}>
+                    {t("languageLabel")}
+                  </Label>
                   <Controller
                     control={control}
                     name={`languages.${index}.language_code`}
                     render={({ field }) => (
                       <SmartSelect
+                        id={languageId}
                         value={field.value}
                         options={languageOptions}
                         onValueChange={field.onChange}
@@ -77,7 +84,7 @@ export default function ProfileLanguageSection({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("levelLabel")}</Label>
+                  <Label htmlFor={levelId}>{t("levelLabel")}</Label>
                   <Controller
                     control={control}
                     name={`languages.${index}.level`}
@@ -97,7 +104,7 @@ export default function ProfileLanguageSection({
                           }
                         }}
                       >
-                        <SelectTrigger aria-label={t("levelLabel")}>
+                        <SelectTrigger id={levelId} aria-label={t("levelLabel")}>
                           <SelectValue placeholder={t("levelLabel")} />
                         </SelectTrigger>
                         <SelectContent>
@@ -142,14 +149,20 @@ export default function ProfileLanguageSection({
                   />
                   {t("targetLanguage")}
                 </label>
+                <Label className="sr-only" htmlFor={descriptionId}>
+                  {t("languageDescriptionPlaceholder")}
+                </Label>
                 <Input
+                  id={descriptionId}
+                  aria-label={t("languageDescriptionPlaceholder")}
                   {...register(`languages.${index}.description`)}
                   value={language.description ?? ""}
                   placeholder={t("languageDescriptionPlaceholder")}
                 />
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
         <Button type="button" variant="secondary" onClick={onAddLanguage}>
           {t("addLanguage")}
