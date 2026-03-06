@@ -156,35 +156,76 @@ const buildTimezoneOptions = (locale: string): Option[] => {
 const buildFormValues = (data: ProfileResponse, fallbackTimezone: string): ProfileFormValues => {
   const resolvedTimezone = data.profile.timezone?.trim() || fallbackTimezone;
   const languages = data.languages.length
-    ? data.languages.map((language) => ({
-        language_code: language.language_code,
-        level: language.level,
-        is_target: language.is_target,
-        description: language.description ?? "",
-      }))
+    ? (() => {
+        const hasOrder = data.languages.some((language) => typeof language.order === "number");
+        const sorted = data.languages
+          .map((language, index) => ({ language, index }))
+          .sort((a, b) => {
+            if (!hasOrder) {
+              return a.index - b.index;
+            }
+            const orderA = a.language.order ?? Number.MAX_SAFE_INTEGER;
+            const orderB = b.language.order ?? Number.MAX_SAFE_INTEGER;
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+            return a.index - b.index;
+          })
+          .map(({ language }) => language);
+        return sorted.map((language) => ({
+          language_code: language.language_code,
+          level: language.level,
+          is_target: language.is_target,
+          description: language.description ?? "",
+        }));
+      })()
     : [DEFAULT_LANGUAGE];
 
   const availability = data.availability.length
     ? (() => {
-        const grouped = new Map<string, AvailabilityDraft>();
-        data.availability.forEach((slot) => {
+        const hasOrder = data.availability.some((slot) => typeof slot.order === "number");
+        const grouped = new Map<
+          string,
+          { slot: AvailabilityDraft; order?: number; index: number }
+        >();
+        data.availability.forEach((slot, index) => {
           const tz = slot.timezone?.trim() || resolvedTimezone;
           const key = `${slot.start_local_time}|${slot.end_local_time}|${tz}`;
+          const order = typeof slot.order === "number" ? slot.order : undefined;
           const existing = grouped.get(key);
           if (existing) {
-            if (!existing.weekdays.includes(slot.weekday)) {
-              existing.weekdays.push(slot.weekday);
+            if (!existing.slot.weekdays.includes(slot.weekday)) {
+              existing.slot.weekdays.push(slot.weekday);
+            }
+            if (order !== undefined) {
+              existing.order =
+                existing.order === undefined ? order : Math.min(existing.order, order);
             }
             return;
           }
           grouped.set(key, {
-            weekdays: [slot.weekday],
-            start_local_time: slot.start_local_time,
-            end_local_time: slot.end_local_time,
-            timezone: tz,
+            slot: {
+              weekdays: [slot.weekday],
+              start_local_time: slot.start_local_time,
+              end_local_time: slot.end_local_time,
+              timezone: tz,
+            },
+            order,
+            index,
           });
         });
-        return Array.from(grouped.values()).map((slot) => ({
+        let entries = Array.from(grouped.values());
+        if (hasOrder) {
+          entries = entries.sort((a, b) => {
+            const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+            const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+            return a.index - b.index;
+          });
+        }
+        return entries.map(({ slot }) => ({
           ...slot,
           weekdays: [...slot.weekdays].sort(),
         }));
@@ -208,18 +249,19 @@ const buildFormValues = (data: ProfileResponse, fallbackTimezone: string): Profi
 };
 
 const expandAvailability = (values: ProfileFormValues): AvailabilityPayload[] => {
-  return values.availability.flatMap((slot) =>
+  return values.availability.flatMap((slot, slotIndex) =>
     slot.weekdays.map((weekday) => ({
       weekday,
       start_local_time: slot.start_local_time,
       end_local_time: slot.end_local_time,
       timezone: slot.timezone?.trim() || values.timezone,
+      order: slotIndex + 1,
     })),
   );
 };
 
 const normalizeLanguages = (values: ProfileFormValues): LanguagePayload[] =>
-  values.languages.map((lang) => {
+  values.languages.map((lang, index) => {
     const languageCode = lang.language_code.trim().toLowerCase();
     const description = lang.description?.trim() || null;
     const isNative = lang.level === 5;
@@ -229,6 +271,7 @@ const normalizeLanguages = (values: ProfileFormValues): LanguagePayload[] =>
       is_native: isNative,
       is_target: isNative ? false : lang.is_target,
       description,
+      order: index + 1,
     };
   });
 
@@ -302,7 +345,12 @@ export default function ProfileForm({
     defaultValues: defaultFormValues,
   });
 
-  const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
+  const {
+    fields: languageFields,
+    append: appendLanguage,
+    remove: removeLanguage,
+    move: moveLanguage,
+  } = useFieldArray({
     control: form.control,
     name: "languages",
   });
@@ -310,6 +358,7 @@ export default function ProfileForm({
     fields: availabilityFields,
     append: appendAvailability,
     replace: replaceAvailability,
+    move: moveAvailability,
   } = useFieldArray({
     control: form.control,
     name: "availability",
@@ -712,6 +761,7 @@ export default function ProfileForm({
                   languages={languages}
                   onAddLanguage={onAddLanguage}
                   onRemoveLanguage={onRemoveLanguage}
+                  onMoveLanguage={moveLanguage}
                   onNext={() => setActiveTab("availability")}
                 />
               </TabsContent>
@@ -728,6 +778,7 @@ export default function ProfileForm({
                   weekdays={WEEKDAYS}
                   onAddAvailability={onAddAvailability}
                   onRemoveAvailability={onRemoveAvailability}
+                  onMoveAvailability={moveAvailability}
                 />
               </TabsContent>
             </Tabs>

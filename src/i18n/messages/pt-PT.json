@@ -143,6 +143,7 @@
       "thursday": "Quinta-feira",
       "friday": "Sexta-feira",
       "saturday": "Sábado"
-    }
+    },
+    "reorderHandleLabel": "Drag to reorder"
   }
 }

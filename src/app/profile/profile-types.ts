@@ -13,6 +13,7 @@ export type LanguagePayload = {
   is_native: boolean;
   is_target: boolean;
   description?: string | null;
+  order?: number;
 };
 
 export type AvailabilityPayload = {
@@ -20,6 +21,7 @@ export type AvailabilityPayload = {
   start_local_time: string;
   end_local_time: string;
   timezone: string;
+  order?: number;
 };
 
 export type AvailabilityDraft = {

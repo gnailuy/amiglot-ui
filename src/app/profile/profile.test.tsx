@@ -323,6 +323,7 @@ describe("ProfileForm", () => {
           is_native: true,
           is_target: false,
           description: null,
+          order: 1,
         },
       ],
     });
@@ -333,6 +334,7 @@ describe("ProfileForm", () => {
           start_local_time: "18:00",
           end_local_time: "20:00",
           timezone: "America/Vancouver",
+          order: 1,
         },
       ],
     });
