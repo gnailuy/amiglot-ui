@@ -9,6 +9,7 @@
     "checking": "正在檢查登入狀態...",
     "signedIn": "你已登入。",
     "completeProfile": "完善個人資料",
+    "profileComplete": "資料已完成",
     "signOut": "登出",
     "signedOut": "你還未登入。",
     "signIn": "透過魔法連結登入"
