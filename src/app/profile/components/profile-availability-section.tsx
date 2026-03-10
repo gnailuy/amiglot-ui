@@ -30,7 +30,7 @@ type ProfileAvailabilitySectionProps = {
   control: Control<ProfileFormValues>;
   register: UseFormRegister<ProfileFormValues>;
 
-  availabilityFields: { id: string }[];
+  availabilityFields: any[];
   availability: ProfileFormValues["availability"];
   availabilityErrorMessage?: string;
   timezoneOptions: SelectOption[];
@@ -185,7 +185,7 @@ export default function ProfileAvailabilitySection({
                             id={startId}
                             type="time"
                             {...register(`availability.${index}.start_local_time`)}
-                            value={slot.start_local_time ?? ""}
+                            defaultValue={(field as any).start_local_time ?? ""}
                           />
                         </div>
                         <div className="space-y-2">
@@ -194,7 +194,7 @@ export default function ProfileAvailabilitySection({
                             id={endId}
                             type="time"
                             {...register(`availability.${index}.end_local_time`)}
-                            value={slot.end_local_time ?? ""}
+                            defaultValue={(field as any).end_local_time ?? ""}
                           />
                         </div>
                         <div className="space-y-2 min-w-0">

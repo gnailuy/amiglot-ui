@@ -8,6 +8,8 @@ whenToUse: "Read when running or updating UI E2E scenarios."
 ## 1. Scope
 End-to-end coverage for the current UI feature set: authentication, session handling, and profile setup (profile details, languages, availability).
 
+**Priority focus:** Run the user-path tests (happy path + validation/user error) with all services up. Scenarios that require stopping the API are **optional** for now.
+
 ## 2. Test Environment
 - UI: Next.js dev server (`npm run dev -- --hostname 127.0.0.1 --port 3000`).
 - API: local dev container on port 6176.
@@ -193,7 +195,7 @@ End-to-end coverage for the current UI feature set: authentication, session hand
 1. Simulate API error (500) on profile load.
 **Expected:** Error banner shown; user stays on Profile.
 
-### E2. API offline
+### E2. API offline (optional)
 **Setup:** Fresh account; complete A1.
 **Steps:**
 1. Stop the API server.
