@@ -170,36 +170,14 @@ Notes:
 
 ---
 ### 2.6 Discovery / Matching
-**POST /search**
-Request:
-```json
-{
-  "target_language": "es",
-  "min_level": 3,
-  "availability_overlap": true,
-  "age_range": { "min": 18, "max": 35 },
-  "country_code": "CA",
-  "cursor": null,
-  "limit": 20
-}
-```
-Response:
-```json
-{
-  "items": [
-    {
-      "user_id": "uuid",
-      "handle": "maria",
-      "country_code": "MX",
-      "age": 24,
-      "languages": [ { "language_code": "es", "level": 5, "is_native": true } ],
-      "availability_summary": "Weeknights"
-    }
-  ],
-  "next_cursor": "..."
-}
-```
-Note: `availability_summary` is derived by the API from the user's availability slots (for UI display convenience). The API groups weekly slots into a small set of human‑readable labels (e.g., Weeknights, Weekends, Mornings/Afternoons/Evenings) based on which weekday + time buckets the user has availability in. It is not stored; it is computed on read.
+
+> **Dedicated design docs (source of truth):**
+> - Backend: `amiglot-api/designs/004-discovery-matching-design.md` — endpoint contract, SQL query plan, index strategy.
+> - Frontend: `006-discovery-matching-design.md` — Dashboard UI, Match Cards, empty/error states, i18n keys.
+
+**GET /api/v1/matches/discover?cursor=\<opaque\>&limit=\<int\>**
+
+Returns paginated potential language exchange partners for the authenticated user, applying supply/demand/bridge matching rules and availability overlap filtering. See the backend design doc for the full response shape, matching rules, and SQL query plan.
 
 **POST /match-requests**
 Create a request.
