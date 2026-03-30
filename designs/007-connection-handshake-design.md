@@ -18,17 +18,9 @@ This slice enables users to **connect** with discovered partners. It adds:
 3. **Accept/Decline** actions on incoming requests.
 4. A **pre-accept messaging** panel for limited conversation before accepting.
 
-## 1.1 General UI Principle: Loading & Disabled States
+## 1.1 Loading & Disabled States
 
-Every component that depends on backend data **must** show a loading indicator (skeleton, spinner, or disabled state) until the data arrives. Specifically:
-
-- **Buttons that trigger API calls** (Connect, Accept, Decline, Cancel, Send Message) must be **disabled** while:
-  - Initial data is still loading (e.g., request status unknown).
-  - A request is in-flight (optimistic UI is acceptable, but the button must not allow duplicate submissions).
-- **Lists and content areas** must show skeleton placeholders while fetching.
-- **Forms** (e.g., the optional message dialog) must disable the submit button until the API call completes.
-
-This principle applies to all components in this slice and retroactively to existing components (e.g., Match Cards on the discovery dashboard).
+All components in this slice follow the **Loading & Disabled States** principle defined in `000-architecture-guidelines.md` §7. Buttons (Connect, Accept, Decline, Cancel, Send Message) are disabled during initial load and while requests are in-flight; lists show skeleton placeholders while fetching.
 
 ## 2. User Flow
 

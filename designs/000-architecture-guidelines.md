@@ -66,3 +66,17 @@ Manual validation and excessive local state hooks are strictly prohibited for fo
   * Always use the `useTranslations()` hook.
   * Keys should be semantic (e.g., `t('auth.login.submitButton')`).
   * When referencing global datasets (like ISO language codes or timezones), prefer the browser's native `Intl` APIs combined with fallback data, rather than maintaining massive hardcoded arrays.
+
+---
+
+## 7. Loading & Disabled States
+
+Every component that depends on backend data **must** show a loading indicator (skeleton, spinner, or disabled state) until the data arrives. Specifically:
+
+- **Buttons that trigger API calls** (e.g., Connect, Accept, Submit) must be **disabled** while:
+  - Initial data is still loading (e.g., state unknown).
+  - A request is in-flight (optimistic UI is acceptable, but the button must not allow duplicate submissions).
+- **Lists and content areas** must show skeleton placeholders while fetching.
+- **Forms** must disable the submit button until the API call completes.
+
+This principle applies to all components across the application.
