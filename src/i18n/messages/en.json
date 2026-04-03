@@ -2,7 +2,8 @@
   "nav": {
     "brand": "Amiglot",
     "language": "Language",
-    "discover": "Discover"
+    "discover": "Discover",
+    "connections": "Connections"
   },
   "home": {
     "title": "Amiglot",
@@ -178,6 +179,59 @@
       "bridgeTooltip": "A shared language you both speak well enough to communicate in while learning",
       "yourTimeTooltip": "Matched time slots shown in your local timezone",
       "levelPair": "{teacher} → {learner}"
+    }
+  },
+  "connections": {
+    "title": "Connections",
+    "signIn": "Sign in to view connections",
+    "loading": "Loading...",
+    "loadMore": "Load More",
+    "retry": "Retry",
+    "tabs": {
+      "incoming": "Incoming",
+      "outgoing": "Outgoing"
+    },
+    "requestCard": {
+      "sentAgo": "Sent {time} ago",
+      "view": "View",
+      "accept": "Accept",
+      "decline": "Decline",
+      "cancel": "Cancel Request"
+    },
+    "detail": {
+      "backToInbox": "Back to Inbox",
+      "requestFrom": "Connection request from {handle}",
+      "requestTo": "Your request to {handle}",
+      "messagesTitle": "Messages",
+      "noMessages": "No messages yet.",
+      "typeMessage": "Type a message...",
+      "send": "Send",
+      "accept": "Accept",
+      "decline": "Decline",
+      "cancelRequest": "Cancel Request"
+    },
+    "connect": {
+      "buttonLabel": "Connect",
+      "requestSent": "Request Sent",
+      "requestReceived": "Request Received",
+      "dialogTitle": "Send Connection Request",
+      "dialogDescription": "Write an optional message to introduce yourself.",
+      "initialMessagePlaceholder": "Hi! I'd love to practice with you...",
+      "sendRequest": "Send Request",
+      "cancel": "Cancel"
+    },
+    "empty": {
+      "incomingTitle": "No incoming requests",
+      "incomingDescription": "When someone wants to connect with you, their request will appear here.",
+      "outgoingTitle": "No outgoing requests",
+      "outgoingDescription": "Find partners on the Discovery page and send them a request!",
+      "discoverPartners": "Discover Partners"
+    },
+    "toast": {
+      "requestSent": "Connection request sent to {handle}!",
+      "accepted": "You are now connected with {handle}!",
+      "declined": "Request declined.",
+      "canceled": "Request canceled."
     }
   }
 }

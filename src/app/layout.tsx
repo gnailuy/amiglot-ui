@@ -53,6 +53,12 @@ export default async function RootLayout({
                 >
                   {t("discover")}
                 </Link>
+                <Link
+                  href="/connections"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t("connections")}
+                </Link>
               </div>
                 <LanguageSwitcher />
               </div>

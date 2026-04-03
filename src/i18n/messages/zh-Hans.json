@@ -2,7 +2,8 @@
   "nav": {
     "brand": "Amiglot",
     "language": "语言",
-    "discover": "发现"
+    "discover": "发现",
+    "connections": "连接"
   },
   "home": {
     "title": "Amiglot",
@@ -178,6 +179,59 @@
       "bridgeTooltip": "双方都能流利使用的共同语言，便于学习过程中的交流",
       "yourTimeTooltip": "匹配的时段已按照你的本地时区显示",
       "levelPair": "{teacher} → {learner}"
+    }
+  },
+  "connections": {
+    "title": "连接",
+    "signIn": "登录以查看连接",
+    "loading": "加载中...",
+    "loadMore": "加载更多",
+    "retry": "重试",
+    "tabs": {
+      "incoming": "收到的",
+      "outgoing": "发出的"
+    },
+    "requestCard": {
+      "sentAgo": "{time}前发送",
+      "view": "查看",
+      "accept": "接受",
+      "decline": "拒绝",
+      "cancel": "取消请求"
+    },
+    "detail": {
+      "backToInbox": "返回收件箱",
+      "requestFrom": "来自 {handle} 的连接请求",
+      "requestTo": "您发送给 {handle} 的请求",
+      "messagesTitle": "消息",
+      "noMessages": "暂无消息。",
+      "typeMessage": "输入消息...",
+      "send": "发送",
+      "accept": "接受",
+      "decline": "拒绝",
+      "cancelRequest": "取消请求"
+    },
+    "connect": {
+      "buttonLabel": "连接",
+      "requestSent": "已发送请求",
+      "requestReceived": "已收到请求",
+      "dialogTitle": "发送连接请求",
+      "dialogDescription": "写一条可选消息来介绍自己。",
+      "initialMessagePlaceholder": "你好！很想和你一起练习...",
+      "sendRequest": "发送请求",
+      "cancel": "取消"
+    },
+    "empty": {
+      "incomingTitle": "没有收到的请求",
+      "incomingDescription": "当有人想与您连接时，他们的请求将显示在这里。",
+      "outgoingTitle": "没有发出的请求",
+      "outgoingDescription": "在发现页面找到伙伴并向他们发送请求！",
+      "discoverPartners": "发现伙伴"
+    },
+    "toast": {
+      "requestSent": "连接请求已发送给 {handle}！",
+      "accepted": "您现在已与 {handle} 建立连接！",
+      "declined": "请求已拒绝。",
+      "canceled": "请求已取消。"
     }
   }
 }

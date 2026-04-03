@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -11,11 +12,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { postJson } from "@/lib/api";
 import type { MatchItem, MatchLanguage, OverlapSlot } from "../discovery-types";
 
 const LEVEL_KEYS = ["zero", "beginner", "elementary", "intermediate", "advanced", "native"] as const;
@@ -140,12 +152,38 @@ function OverlapDisplay({
 
 type Props = {
   match: MatchItem;
+  pendingRequestSent?: boolean;
 };
 
-export default function MatchCard({ match }: Props) {
+export default function MatchCard({ match, pendingRequestSent }: Props) {
   const t = useTranslations("dashboard");
+  const ct = useTranslations("connections.connect");
   const levelT = useTranslations("profile.languageLevel");
   const weekdayT = useTranslations("profile.weekdays");
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [initialMessage, setInitialMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(pendingRequestSent ?? false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSendRequest = async () => {
+    setSending(true);
+    setError(null);
+    try {
+      await postJson("/match-requests", {
+        recipient_id: match.user_id,
+        initial_message: initialMessage.trim() || undefined,
+      });
+      setSent(true);
+      setDialogOpen(false);
+      setInitialMessage("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setSending(false);
+    }
+  };
 
   const flag = match.country_code ? countryFlag(match.country_code) : "";
   const countryName = match.country_code
@@ -215,9 +253,47 @@ export default function MatchCard({ match }: Props) {
             <Button size="sm" variant="outline" disabled>
               {t("card.viewProfile")}
             </Button>
-            <Button size="sm" disabled>
-              {t("card.sendRequest")}
-            </Button>
+            {sent ? (
+              <Button size="sm" variant="secondary" disabled>
+                {ct("requestSent")}
+              </Button>
+            ) : (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">{ct("buttonLabel")}</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{ct("dialogTitle")}</DialogTitle>
+                    <DialogDescription>
+                      {ct("dialogDescription")}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Input
+                    value={initialMessage}
+                    onChange={(e) => setInitialMessage(e.target.value)}
+                    placeholder={ct("initialMessagePlaceholder")}
+                    maxLength={500}
+                    disabled={sending}
+                  />
+                  {error && (
+                    <p className="text-sm text-destructive">{error}</p>
+                  )}
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogOpen(false)}
+                      disabled={sending}
+                    >
+                      {ct("cancel")}
+                    </Button>
+                    <Button onClick={handleSendRequest} disabled={sending}>
+                      {ct("sendRequest")}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardContent>
       </Card>

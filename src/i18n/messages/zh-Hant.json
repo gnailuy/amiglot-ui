@@ -2,7 +2,8 @@
   "nav": {
     "brand": "Amiglot",
     "language": "語言",
-    "discover": "發現"
+    "discover": "發現",
+    "connections": "連接"
   },
   "home": {
     "title": "Amiglot",
@@ -178,6 +179,59 @@
       "bridgeTooltip": "雙方都能流利使用的共同語言，便於學習過程中的交流",
       "yourTimeTooltip": "匹配的時段已按照你的本地時區顯示",
       "levelPair": "{teacher} → {learner}"
+    }
+  },
+  "connections": {
+    "title": "連接",
+    "signIn": "登入以查看連接",
+    "loading": "載入中...",
+    "loadMore": "載入更多",
+    "retry": "重試",
+    "tabs": {
+      "incoming": "收到的",
+      "outgoing": "發出的"
+    },
+    "requestCard": {
+      "sentAgo": "{time}前發送",
+      "view": "查看",
+      "accept": "接受",
+      "decline": "拒絕",
+      "cancel": "取消請求"
+    },
+    "detail": {
+      "backToInbox": "返回收件箱",
+      "requestFrom": "來自 {handle} 的連接請求",
+      "requestTo": "您發送給 {handle} 的請求",
+      "messagesTitle": "訊息",
+      "noMessages": "暫無訊息。",
+      "typeMessage": "輸入訊息...",
+      "send": "發送",
+      "accept": "接受",
+      "decline": "拒絕",
+      "cancelRequest": "取消請求"
+    },
+    "connect": {
+      "buttonLabel": "連接",
+      "requestSent": "已發送請求",
+      "requestReceived": "已收到請求",
+      "dialogTitle": "發送連接請求",
+      "dialogDescription": "寫一條可選訊息來介紹自己。",
+      "initialMessagePlaceholder": "你好！很想和你一起練習...",
+      "sendRequest": "發送請求",
+      "cancel": "取消"
+    },
+    "empty": {
+      "incomingTitle": "沒有收到的請求",
+      "incomingDescription": "當有人想與您連接時，他們的請求將顯示在這裡。",
+      "outgoingTitle": "沒有發出的請求",
+      "outgoingDescription": "在發現頁面找到夥伴並向他們發送請求！",
+      "discoverPartners": "發現夥伴"
+    },
+    "toast": {
+      "requestSent": "連接請求已發送給 {handle}！",
+      "accepted": "您現在已與 {handle} 建立連接！",
+      "declined": "請求已拒絕。",
+      "canceled": "請求已取消。"
     }
   }
 }

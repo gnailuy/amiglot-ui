@@ -2,7 +2,8 @@
   "nav": {
     "brand": "Amiglot",
     "language": "Idioma",
-    "discover": "Descobrir"
+    "discover": "Descobrir",
+    "connections": "Conexões"
   },
   "home": {
     "title": "Amiglot",
@@ -178,6 +179,59 @@
       "bridgeTooltip": "Um idioma que vocês dois falam bem o suficiente para se comunicar enquanto aprendem",
       "yourTimeTooltip": "Horários compatíveis exibidos no seu fuso horário",
       "levelPair": "{teacher} → {learner}"
+    }
+  },
+  "connections": {
+    "title": "Conexões",
+    "signIn": "Entre para ver conexões",
+    "loading": "Carregando...",
+    "loadMore": "Carregar mais",
+    "retry": "Tentar novamente",
+    "tabs": {
+      "incoming": "Recebidas",
+      "outgoing": "Enviadas"
+    },
+    "requestCard": {
+      "sentAgo": "Enviado há {time}",
+      "view": "Ver",
+      "accept": "Aceitar",
+      "decline": "Recusar",
+      "cancel": "Cancelar solicitação"
+    },
+    "detail": {
+      "backToInbox": "Voltar para a caixa de entrada",
+      "requestFrom": "Solicitação de conexão de {handle}",
+      "requestTo": "Sua solicitação para {handle}",
+      "messagesTitle": "Mensagens",
+      "noMessages": "Nenhuma mensagem ainda.",
+      "typeMessage": "Digite uma mensagem...",
+      "send": "Enviar",
+      "accept": "Aceitar",
+      "decline": "Recusar",
+      "cancelRequest": "Cancelar solicitação"
+    },
+    "connect": {
+      "buttonLabel": "Conectar",
+      "requestSent": "Solicitação enviada",
+      "requestReceived": "Solicitação recebida",
+      "dialogTitle": "Enviar solicitação de conexão",
+      "dialogDescription": "Escreva uma mensagem opcional para se apresentar.",
+      "initialMessagePlaceholder": "Olá! Adoraria praticar com você...",
+      "sendRequest": "Enviar solicitação",
+      "cancel": "Cancelar"
+    },
+    "empty": {
+      "incomingTitle": "Sem solicitações recebidas",
+      "incomingDescription": "Quando alguém quiser se conectar com você, a solicitação aparecerá aqui.",
+      "outgoingTitle": "Sem solicitações enviadas",
+      "outgoingDescription": "Encontre parceiros na página Descobrir e envie uma solicitação!",
+      "discoverPartners": "Descobrir parceiros"
+    },
+    "toast": {
+      "requestSent": "Solicitação de conexão enviada para {handle}!",
+      "accepted": "Você agora está conectado com {handle}!",
+      "declined": "Solicitação recusada.",
+      "canceled": "Solicitação cancelada."
     }
   }
 }
