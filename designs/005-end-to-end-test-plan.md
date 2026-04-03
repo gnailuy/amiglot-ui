@@ -6,7 +6,7 @@ whenToUse: "Read when running or updating UI E2E scenarios."
 # Amiglot UI — End-to-End Test Plan
 
 ## 1. Scope
-End-to-end coverage for the current UI feature set: authentication, session handling, and profile setup (profile details, languages, availability).
+End-to-end coverage for the current UI feature set: authentication, session handling, profile setup (profile details, languages, availability), discovery & matching (dashboard), and connection (handshake).
 
 **Priority focus:** Run the user-path tests (happy path + validation/user error) with all services up. Scenarios that require stopping the API are **optional** for now.
 
@@ -354,7 +354,153 @@ This script is idempotent — it cleans previous seed data before inserting. It 
 
 See the comment block at the end of `seed_test_profiles.sql` for the full expected match matrix.
 
-## 11. Regression Checklist
-- No console errors on Home, Login, Verify, Profile.
+## 11. Connection (Handshake) Test Cases
+
+### H1. Connect button on Match Card
+**Setup:** Seed DB. Sign in as Alice (test+seed1@gnailuy.com).
+**Steps:**
+1. Navigate to Dashboard.
+2. Find a match card (e.g., Bob's).
+3. Click the "Connect" button.
+**Expected:** A dialog appears with a text input for an optional initial message and "Send Request" / "Cancel" buttons.
+
+### H2. Send connection request from Dashboard
+**Setup:** Seed DB. Sign in as Alice.
+**Steps:**
+1. Navigate to Dashboard.
+2. Click "Connect" on Bob's card.
+3. Type "Hi Bob! Let's practice Chinese together." in the message field.
+4. Click "Send Request".
+**Expected:** Toast: "Connection request sent to @bob!". The card now shows "Request Sent" badge; Connect button is disabled.
+
+### H3. Connect button — request already sent
+**Setup:** Alice has already sent a pending request to Bob.
+**Steps:**
+1. Sign in as Alice and navigate to Dashboard.
+**Expected:** Bob's card shows "Request Sent" instead of the "Connect" button.
+
+### H4. Connect button — request received
+**Setup:** Bob has sent a pending request to Alice.
+**Steps:**
+1. Sign in as Alice and navigate to Dashboard.
+**Expected:** Bob's card shows "Request Received" badge.
+
+### H5. Connections page — incoming tab (default)
+**Setup:** Alice has at least one incoming pending request.
+**Steps:**
+1. Sign in as Alice.
+2. Navigate to `/connections`.
+**Expected:** Incoming tab is active by default. Request cards show requester handle, country, age, message count, and time since request. "View", "Accept", "Decline" buttons visible.
+
+### H6. Connections page — outgoing tab
+**Setup:** Alice has at least one outgoing pending request.
+**Steps:**
+1. Navigate to `/connections`.
+2. Click "Outgoing" tab.
+**Expected:** Outgoing request cards show recipient info. "View" and "Cancel Request" buttons visible.
+
+### H7. Connections page — empty state (incoming)
+**Setup:** No pending incoming requests for Alice.
+**Steps:**
+1. Navigate to `/connections` → Incoming tab.
+**Expected:** Empty state: "No incoming requests" with description text.
+
+### H8. Connections page — empty state (outgoing)
+**Setup:** No pending outgoing requests for Alice.
+**Steps:**
+1. Navigate to `/connections` → Outgoing tab.
+**Expected:** Empty state: "No outgoing requests" with "Discover Partners" link.
+
+### H9. Request detail — view and messaging
+**Setup:** Pending request from Alice to Bob with an initial message.
+**Steps:**
+1. Sign in as Bob.
+2. Navigate to `/connections` → click "View" on Alice's request.
+**Expected:** Request detail page shows: "Connection request from @alice", language info (mutual teach/learn/bridge), the initial message, message input with remaining count, and "Accept" / "Decline" buttons.
+
+### H10. Pre-accept messaging — send and receive
+**Setup:** Pending request from Alice to Bob.
+**Steps:**
+1. Sign in as Bob, view the request detail.
+2. Type "Hello Alice!" and click "Send".
+**Expected:** Message appears in the conversation. Remaining message count decreases.
+3. Sign in as Alice, view the same request.
+**Expected:** Bob's message is visible.
+
+### H11. Pre-accept messaging — limit reached
+**Setup:** Bob has sent `PRE_MATCH_MESSAGE_LIMIT` messages on a request.
+**Steps:**
+1. Sign in as Bob and view the request detail.
+**Expected:** Message input is disabled. Text: "Message limit reached. Accept to continue chatting."
+
+### H12. Accept request
+**Setup:** Pending request from Alice to Bob.
+**Steps:**
+1. Sign in as Bob and navigate to the request detail.
+2. Click "Accept".
+**Expected:** Toast: "You are now connected with @alice!". Redirect away from request detail.
+
+### H13. Decline request — confirmation dialog
+**Setup:** Pending request from Alice to Bob.
+**Steps:**
+1. Sign in as Bob and navigate to the request detail or click "Decline" from inbox.
+**Expected:** Confirmation dialog: "Decline this request? @alice won't be notified."
+2. Confirm decline.
+**Expected:** Toast: "Request declined." Request removed from inbox.
+
+### H14. Cancel request — confirmation dialog
+**Setup:** Pending request from Alice to Bob.
+**Steps:**
+1. Sign in as Alice, go to Outgoing tab, click "Cancel Request" or view detail.
+**Expected:** Confirmation dialog: "Cancel your request to @bob?"
+2. Confirm cancel.
+**Expected:** Toast: "Request canceled." Request removed from outgoing list.
+
+### H15. Navigation — Connections link
+**Steps:**
+1. Sign in and check the navigation header.
+**Expected:** "Connections" link is visible in the main navigation, links to `/connections`.
+
+### H16. Connections i18n — Chinese locale
+**Steps:**
+1. Switch locale to `zh` or `zh-Hans`.
+2. Navigate to `/connections`.
+3. View a request detail page.
+**Expected:** All labels ("Connections", "Incoming", "Outgoing", "Accept", "Decline", message remaining text, etc.) are in Chinese. No MISSING_MESSAGE errors in console.
+
+### H17. Connections i18n — Portuguese locale
+**Steps:**
+1. Switch locale to `pt` or `pt-BR`.
+2. Navigate to `/connections` and view a request detail.
+**Expected:** All labels are in Portuguese. No MISSING_MESSAGE errors.
+
+### H18. Error state — duplicate request
+**Setup:** Alice already has a pending request to Bob.
+**Steps:**
+1. Attempt to send another request to Bob (e.g., via API race or UI manipulation).
+**Expected:** Toast: "You already have a pending request with this user."
+
+### H19. Error state — already matched
+**Setup:** Alice and Bob are already connected.
+**Steps:**
+1. Attempt to send a request to Bob.
+**Expected:** Toast: "You're already connected!" (if Connect button is still visible, which it shouldn't be).
+
+### H20. Request detail — not pending stale state
+**Setup:** Alice views Bob's request detail. Meanwhile Bob declines/cancels from another session.
+**Steps:**
+1. Alice clicks "Accept" on the now-declined request.
+**Expected:** Toast: "This request is no longer pending." List refreshes.
+
+### H21. Connection requests pagination
+**Setup:** User with multiple incoming pending requests (enough to span pages).
+**Steps:**
+1. Navigate to `/connections` → Incoming tab.
+2. Scroll to bottom and click "Load More" (if available).
+**Expected:** Additional request cards appended; no duplicates. "Load More" hidden when no more results.
+
+## 12. Regression Checklist
+- No console errors on Home, Login, Verify, Profile, Dashboard, Connections.
 - Forms remain responsive during normal use.
 - Navigation between tabs does not reset inputs unexpectedly.
+- Connection state changes (accept/decline/cancel) properly update all related views.
