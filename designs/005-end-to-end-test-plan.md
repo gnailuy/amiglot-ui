@@ -344,7 +344,7 @@ End-to-end coverage for the current UI feature set: authentication, session hand
 
 ## 10.1 Test Data Setup
 
-For scenarios D12–D21, use the seed script in the API repo:
+For scenarios D12–D21 and H1–H21, use the seed script in the API repo:
 
 ```bash
 psql -f /path/to/amiglot-api/db/seeds/seed_test_profiles.sql
@@ -353,6 +353,110 @@ psql -f /path/to/amiglot-api/db/seeds/seed_test_profiles.sql
 This script is idempotent — it cleans previous seed data before inserting. It creates 12 test users covering: basic mutual match, multi-language, bridge-only, no overlap, minimal overlap, base-language matching, blocked pairs, non-discoverable users, and rare languages with no matches.
 
 See the comment block at the end of `seed_test_profiles.sql` for the full expected match matrix.
+
+## 10.2 Seed Users by Test Group
+
+Each test group lists the seed users it requires. Create all seed users via the seed script, then log in as the specified user for each group.
+
+### Group A: Fresh-Account Tests (no seed users)
+
+| Tests | Description |
+|-------|-------------|
+| §4 Auth (A1–A4), §5 Profile (P1–P5), §6 Languages (L1–L4), §7 Availability (V1–V5), §8 i18n (I1–I2), §9 Errors (E1–E2) | Each test creates a fresh account (`test+<timestamp>@gnailuy.com`). No seed data needed. |
+
+### Group B: Dashboard — Basic Discovery
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| D1 (matches load) | Alice (`test+seed1`) | Alice + Bob (+ others) | At least one mutual match appears |
+| D5 (multi mutual languages) | Kevin (`test+seed11`) | Kevin + Luna | Card shows multiple "They teach you" languages |
+| D6 (base-language zh↔zh-Hans) | Alice (`test+seed1`) | Alice + Grace | `zh-Hans` matched via base `zh` |
+| D7 (local time display) | Alice (`test+seed1`) | Alice + Bob | UTC→local timezone conversion |
+| D8 (pagination) | Alice (`test+seed1`) | All seed users | Load More with multiple matches |
+
+### Group C: Dashboard — Edge Cases
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| D2 (empty state) | Hiro (`test+seed8`) | Hiro | Targets Korean — no teachers |
+| D3 (profile incomplete) | Fresh account | None | Redirected to profile setup |
+| D4 (no target languages) | Fresh account (native only) | None | Inline "add target" message |
+| D15 (blocked user hidden) | Bob (`test+seed2`) | Bob + Ivan | Ivan blocked, not shown |
+| D16 (non-discoverable hidden) | Alice (`test+seed1`) | Alice + Julia | Julia not discoverable |
+| D17 (no overlap) | Alice (`test+seed1`) | Alice + Eve | Language match but zero time overlap |
+| D18 (minimal overlap) | Bob (`test+seed2`) | Bob + Frank | 65 min overlap, just above threshold |
+| D19 (rare language empty) | Hiro (`test+seed8`) | Hiro | No Korean teachers |
+
+### Group D: Dashboard — Seed Card Details
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| D12 (level pair format) | Alice (`test+seed1`) | Alice + Bob | Compact level pair display |
+| D13 (multi-language card) | Kevin (`test+seed11`) | Kevin + Luna | Multiple languages on one card |
+| D14 (three-way exchange) | Carlos (`test+seed3`) | Carlos + Diana + Kevin | Bridge language visibility |
+| D20 (base-language seed) | Alice (`test+seed1`) | Alice + Grace | `zh-Hans` in "They teach you" |
+| D21 (country flag + age) | Alice (`test+seed1`) | Alice + Bob | 🇨🇳, @bob, age, "China" |
+
+### Group E: Dashboard — i18n & Errors
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| D9 (Portuguese locale) | Any seed user | Any with matches | Labels in Portuguese |
+| D10 (Chinese locale) | Any seed user | Any with matches | Labels in Chinese |
+| D11 (network error) | Any | Any | API failure handling |
+
+### Group F: Connection Handshake — Happy Paths
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| H1 (Connect button) | Alice (`test+seed1`) | Alice + Bob | Dialog appears on click |
+| H2 (send request) | Alice (`test+seed1`) | Alice + Bob | Request sent, card updates |
+| H5 (incoming tab) | Bob (`test+seed2`) | Alice + Bob | Incoming request list |
+| H6 (outgoing tab) | Alice (`test+seed1`) | Alice + Bob | Outgoing request list |
+| H9 (request detail) | Bob (`test+seed2`) | Alice + Bob | Detail page with messaging |
+| H10 (pre-accept messaging) | Bob + Alice | Alice + Bob | Send and receive messages |
+| H12 (accept) | Bob (`test+seed2`) | Alice + Bob | Accept and redirect |
+| H15 (navigation link) | Any seed user | Any | Connections link in header |
+| H21 (pagination) | Bob (`test+seed2`) | Multiple requesters → Bob | Many incoming requests |
+
+### Group G: Connection Handshake — State Changes
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| H3 (already sent badge) | Alice (`test+seed1`) | Alice + Bob | "Request Sent" on card |
+| H4 (received badge) | Alice (`test+seed1`) | Bob + Alice | "Request Received" on card |
+| H7 (empty incoming) | Fresh or Hiro | Hiro or fresh | No incoming requests |
+| H8 (empty outgoing) | Fresh or Hiro | Hiro or fresh | No outgoing requests |
+| H11 (message limit) | Bob (`test+seed2`) | Alice + Bob | Input disabled at limit |
+| H13 (decline + confirm) | Bob (`test+seed2`) | Alice + Bob | Confirmation dialog |
+| H14 (cancel + confirm) | Alice (`test+seed1`) | Alice + Bob | Confirmation dialog |
+| H20 (stale state) | Alice (`test+seed1`) | Alice + Bob | Accept after decline |
+
+### Group H: Connection — Errors & i18n
+
+| Tests | Login As | Seed Users Needed | Purpose |
+|-------|----------|-------------------|---------|
+| H16 (Chinese locale) | Any seed user | Any with requests | Labels in Chinese |
+| H17 (Portuguese locale) | Any seed user | Any with requests | Labels in Portuguese |
+| H18 (duplicate request) | Alice (`test+seed1`) | Alice + Bob | Already-pending error |
+| H19 (already matched) | Alice (`test+seed1`) | Alice + Bob (matched) | Already-connected error |
+
+### Seed User Reference
+
+| # | Handle | Email | Native | Targets | Key Trait |
+|---|--------|-------|--------|---------|-----------|
+| 1 | alice | test+seed1@gnailuy.com | en | zh | Primary test requester |
+| 2 | bob | test+seed2@gnailuy.com | zh | en | Primary test recipient; blocks Ivan |
+| 3 | carlos | test+seed3@gnailuy.com | pt-BR, es | en, zh | Multi-lang; bridge match |
+| 4 | diana | test+seed4@gnailuy.com | en | pt | No time overlap with others |
+| 5 | eve | test+seed5@gnailuy.com | zh | en | No availability overlap with Alice |
+| 6 | frank | test+seed6@gnailuy.com | en | zh | Minimal overlap (65 min) with Bob |
+| 7 | grace | test+seed7@gnailuy.com | zh-Hans | en | Base-language matching test |
+| 8 | hiro | test+seed8@gnailuy.com | ja | ko | Rare language — no matches |
+| 9 | ivan | test+seed9@gnailuy.com | en | zh | Blocked by Bob |
+| 10 | julia | test+seed10@gnailuy.com | zh | en | NOT discoverable |
+| 11 | kevin | test+seed11@gnailuy.com | en | zh, pt | Multi-target language match |
+| 12 | luna | test+seed12@gnailuy.com | pt-BR, zh-Hans (adv) | en | Multi-teach language match |
 
 ## 11. Connection (Handshake) Test Cases
 
