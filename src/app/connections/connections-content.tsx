@@ -22,7 +22,6 @@ type Props = {
 export default function ConnectionsContent({
   initialData,
   initialError,
-  initialErrorStatus,
   initialFetched,
 }: Props) {
   const t = useTranslations("connections");

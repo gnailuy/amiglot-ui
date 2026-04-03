@@ -31,7 +31,6 @@ export default function RequestDetail({
   initialError,
 }: Props) {
   const t = useTranslations("connections.detail");
-  const toastT = useTranslations("connections.toast");
   const router = useRouter();
 
   const [request] = useState(initialRequest);
