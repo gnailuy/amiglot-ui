@@ -24,6 +24,14 @@ End-to-end coverage for the current UI feature set: authentication, session hand
 - Primary languages for the plan: **Chinese** (native) + **Portuguese** (target).
 - Default timezone for checks: `America/Vancouver` unless specified.
 
+### Seed Users (required for Discovery, Matching, and Connection tests)
+**When setting up any new test environment, seed users must be created before running E2E tests.**
+Run the seed script from the API repo:
+```bash
+python3 scripts/seed-users.py --api-url http://localhost:6176/api/v1
+```
+This creates 12 seed users with profiles, languages, and availability configured for the test scenarios below. Since test containers use ephemeral storage, re-run the script each time a test environment is recreated. See the API E2E test plan (§2.1–§2.2) for full seed user details.
+
 ## 4. Authentication & Session Test Cases
 
 ### A1. Sign in (fresh account)
