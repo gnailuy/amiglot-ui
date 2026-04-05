@@ -3,7 +3,7 @@
  * Amiglot UI — E2E Test Runner (Playwright)
  *
  * Tests core UI flows: Auth, Profile, Dashboard, Connections.
- * Usage: node scripts/e2e-test.mjs [--base-url https://test.gnailuy.com]
+ * Usage: node scripts/e2e-test.mjs [--base-url https://test.example.com]
  *
  * Requires: npx playwright (chromium browser installed)
  */
@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
 
 const BASE_URL = process.argv.includes('--base-url')
   ? process.argv[process.argv.indexOf('--base-url') + 1]
-  : 'https://test.gnailuy.com';
+  : 'https://test.example.com';
 const API_URL = 'http://localhost:6176/api/v1';
 const SCREENSHOT_DIR = process.env.SCREENSHOT_DIR || '/tmp/amiglot-ui-e2e';
 
@@ -68,7 +68,7 @@ async function testAuth(browser) {
 
   try {
     // A1: Sign in
-    const email = `test+e2e${Date.now()}@gnailuy.com`;
+    const email = `test+e2e${Date.now()}@example.com`;
     await page.goto(BASE_URL, { waitUntil: 'networkidle' });
     await screenshot(page, 'home-signed-out');
 
@@ -109,7 +109,7 @@ async function testProfile(browser) {
   const page = await context.newPage();
 
   try {
-    const email = `test+e2e${Date.now()}@gnailuy.com`;
+    const email = `test+e2e${Date.now()}@example.com`;
     await loginInBrowser(page, email);
 
     // P1: Navigate to profile
@@ -155,7 +155,7 @@ async function testDashboard(browser) {
 
   try {
     // Login as Alice (seed user)
-    await loginInBrowser(page, 'test+seed1@gnailuy.com');
+    await loginInBrowser(page, 'test+seed1@example.com');
 
     // D1: Dashboard loads with matches
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
@@ -178,7 +178,7 @@ async function testDashboard(browser) {
     // D19: Empty state (Hiro)
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
-    await loginInBrowser(page2, 'test+seed8@gnailuy.com');
+    await loginInBrowser(page2, 'test+seed8@example.com');
     await page2.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
     await page2.waitForTimeout(3000);
     await screenshot(page2, 'dashboard-hiro-empty');
@@ -220,8 +220,8 @@ async function testConnections(browser) {
 
   try {
     // Use fresh users for clean state
-    const email_a = `test+e2econn${Date.now()}a@gnailuy.com`;
-    const email_b = `test+e2econn${Date.now()}b@gnailuy.com`;
+    const email_a = `test+e2econn${Date.now()}a@example.com`;
+    const email_b = `test+e2econn${Date.now()}b@example.com`;
 
     // Set up both users via API
     const { uid: uidA } = await registerViaApi(email_a);
