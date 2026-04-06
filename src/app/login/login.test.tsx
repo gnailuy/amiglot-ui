@@ -102,7 +102,7 @@ describe('LoginForm', () => {
     });
 
     it('uses NEXT_PUBLIC_APP_URL for dev login link when set', async () => {
-        process.env.NEXT_PUBLIC_APP_URL = 'https://test.example.com';
+        process.env.NEXT_PUBLIC_APP_URL = 'https://app.example.com';
         postJson.mockResolvedValue({
             ok: true,
             dev_login_url: 'http://127.0.0.1:3000/auth/verify?token=abc',
@@ -121,11 +121,11 @@ describe('LoginForm', () => {
         expect(await screen.findByText(/dev login link/i)).toBeInTheDocument();
         expect(
             screen.getByRole('link', {
-                name: 'https://test.example.com/auth/verify?token=abc',
+                name: 'https://app.example.com/auth/verify?token=abc',
             }),
         ).toHaveAttribute(
             'href',
-            'https://test.example.com/auth/verify?token=abc',
+            'https://app.example.com/auth/verify?token=abc',
         );
     });
     it('shows error message on failure', async () => {

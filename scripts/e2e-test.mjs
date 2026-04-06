@@ -3,7 +3,7 @@
  * Amiglot UI — E2E Test Runner (Playwright)
  *
  * Tests core UI flows: Auth, Profile, Dashboard, Connections.
- * Usage: node scripts/e2e-test.mjs [--base-url https://test.example.com]
+ * Usage: node scripts/e2e-test.mjs [--base-url https://app.example.com]
  *
  * Requires: npx playwright (chromium browser installed)
  */
@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
 
 const BASE_URL = process.argv.includes('--base-url')
   ? process.argv[process.argv.indexOf('--base-url') + 1]
-  : 'https://test.example.com';
+  : 'https://app.example.com';
 const API_URL = 'http://localhost:6176/api/v1';
 const SCREENSHOT_DIR = process.env.SCREENSHOT_DIR || '/tmp/amiglot-ui-e2e';
 
