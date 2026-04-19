@@ -19,6 +19,7 @@ Design for the Discovery Dashboard — the main entry point where authenticated 
 |----------|-------------|
 | [Architecture Guidelines](../architecture/guidelines.md) | Component structure rules |
 | [Technical Specification](technical-specification.md) | Discovery endpoint contract |
+| [Discovery Matching (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/discovery-matching.md) | Server-side matching rules and endpoint |
 | [Connection Handshake](connection-handshake.md) | Connect button on match cards leads here |
 | [Product Definition](product-definition.md) | Matching rules |
 

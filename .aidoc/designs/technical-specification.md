@@ -18,6 +18,7 @@ Shared API contract between frontend and backend. The API repo focuses on implem
 |----------|-------------|
 | [Architecture Guidelines](../architecture/guidelines.md) | Component structure for consuming these endpoints |
 | [Product Definition](product-definition.md) | Product requirements these endpoints serve |
+| [API Contract (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/api-contract.md) | Server-side implementation of this contract |
 | [Discovery Dashboard](discovery-dashboard.md) | UI consuming the discovery endpoint |
 | [Connection Handshake](connection-handshake.md) | UI consuming the connection endpoints |
 

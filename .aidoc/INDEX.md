@@ -32,6 +32,20 @@ Discovery index for all project documentation. See reading chains below for guid
 | [workflows/unit-test-plan.md](workflows/unit-test-plan.md) | Unit test baseline and coverage priorities |
 | [workflows/e2e-test-plan.md](workflows/e2e-test-plan.md) | End-to-end test plan with Playwright |
 
+## Cross-Repo References (amiglot-api)
+
+Amiglot UI and API are closely connected. The API repo (`gnailuy/amiglot-api`) has its own `.aidoc/` with complementary docs:
+
+| UI Doc | API Counterpart | Relationship |
+|--------|----------------|---------------|
+| [Technical Specification](designs/technical-specification.md) | [API Contract](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/api-contract.md) | Shared endpoint contract — UI defines the client side, API defines the server side |
+| [Discovery Dashboard](designs/discovery-dashboard.md) | [Discovery Matching](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/discovery-matching.md) | UI dashboard ↔ API matching rules that power it |
+| [Connection Handshake](designs/connection-handshake.md) | [Connection Handshake](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/connection-handshake.md) | UI flows and components ↔ API state machine |
+| [E2E Test Plan](workflows/e2e-test-plan.md) | [E2E Test Plan](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/workflows/e2e-test-plan.md) | Playwright browser tests ↔ Server-side test scenarios |
+| [Architecture Guidelines](architecture/guidelines.md) | [Architecture Guidelines](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/architecture/guidelines.md) | Frontend conventions ↔ Backend conventions |
+| — | [Database Schema](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/database-schema.md) | Tables, constraints, and migrations (API repo is the source of truth) |
+| — | [Matching Query](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/discovery-matching-query.md) | SQL CTE and index strategy for discovery matching |
+
 ## Reading Chains
 
 ### New Developer
@@ -54,3 +68,11 @@ Discovery index for all project documentation. See reading chains below for guid
 ### Product Context
 1. [Product Definition](designs/product-definition.md) — scope and personas
 2. [Product Specification](designs/product-specification.md) — user stories and flows
+
+### Cross-Repo: Full-Stack Feature Understanding
+1. [Product Definition](designs/product-definition.md) — what Amiglot is
+2. [Architecture Guidelines](architecture/guidelines.md) — Frontend conventions
+3. [Architecture Guidelines (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/architecture/guidelines.md) — Backend conventions
+4. [Technical Specification](designs/technical-specification.md) + [API Contract (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/api-contract.md) — shared contract
+5. [Discovery Dashboard](designs/discovery-dashboard.md) + [Discovery Matching (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/discovery-matching.md) — full-stack discovery
+6. [Connection Handshake](designs/connection-handshake.md) + [Connection Handshake (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/connection-handshake.md) — full-stack connection

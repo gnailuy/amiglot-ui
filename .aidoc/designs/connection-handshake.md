@@ -20,6 +20,7 @@ UI for connection requests: Connect button on match cards, connection requests i
 |----------|-------------|
 | [Discovery Dashboard](discovery-dashboard.md) | Connect button lives on match cards |
 | [Technical Specification](technical-specification.md) | Connection endpoint contract |
+| [Connection Handshake (API)](https://github.com/gnailuy/amiglot-api/blob/main/.aidoc/designs/connection-handshake.md) | Server-side state machine and endpoints |
 | [Architecture Guidelines](../architecture/guidelines.md) | Component structure and loading states |
 | [Product Definition](product-definition.md) | Matching and messaging requirements |
 
