@@ -47,28 +47,110 @@ Same 12 seed users as API E2E plan (alice through luna). See API `.aidoc/workflo
 ## Test Groups
 
 ### Group A: Fresh-Account Tests (no seed data)
-Auth (sign in, session persistence, sign out, invalid link), profile (load, handle check, validation, save, error handling), languages (add/update, remove edge cases, validation, ordering), availability (add/edit, grouped display, invalid ranges, remove, ordering), i18n (Chinese/Portuguese), error states.
+
+| Test | Description |
+|------|-------------|
+| A1 | Sign in with fresh account |
+| A2 | Session persistence across reload |
+| A3 | Sign out |
+| A4 | Invalid/expired magic link |
+| P1 | Initial profile load (empty defaults) |
+| P2 | Handle availability check |
+| P2b | Dropdown focus on open |
+| P3 | Validation on save |
+| P4 | Successful save (details + languages + availability) |
+| P5 | Save error handling |
+| L1 | Add/update languages |
+| L2 | Remove language edge cases |
+| L3 | Language validation errors |
+| L4 | Language ordering persistence |
+| V1 | Add/edit availability slot |
+| V2 | Grouped weekdays display |
+| V3 | Invalid time ranges |
+| V4 | Remove slot edge case |
+| V5 | Availability ordering (grouped slots) |
+| I1 | Chinese locale |
+| I2 | Portuguese locale |
+| E1 | Profile load failure |
+| E2 | API offline (optional) |
 
 ### Group B: Dashboard — Basic Discovery
-Login as Alice/Kevin. Tests: matches load, multi-language card, base-language matching, local time display, pagination.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| D1 | Alice | Dashboard loads with matches |
+| D5 | Alice | Match card displays all mutual languages |
+| D6 | Alice | Base-language matching in UI (zh↔zh-Hans) |
+| D7 | Alice | Availability overlap displayed in local time |
+| D8 | Alice | Load More pagination |
+| D13 | Kevin | Multi-language match card |
 
 ### Group C: Dashboard — Edge Cases
-Empty state (Hiro), profile incomplete redirect, no target languages, blocked user hidden, non-discoverable hidden, no overlap, minimal overlap threshold, rare language empty.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| D2 | Hiro | Empty state (rare language, no matches) |
+| D3 | Fresh | Profile incomplete redirect |
+| D4 | Fresh | No target languages |
+| D15 | Bob | Blocked user not shown (Ivan) |
+| D16 | Alice | Non-discoverable user hidden (Julia) |
+| D17 | Alice | No availability overlap — no match (Eve) |
+| D18 | Alice | Minimal overlap threshold (Frank) |
+| D19 | Hiro | Rare language — empty results |
 
 ### Group D: Dashboard — Card Details
-Level pair format, multi-language card, three-way exchange, base-language seed, country flag + age.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| D12 | Alice | Level pair display — compact format |
+| D13 | Kevin | Multi-language match card |
+| D14 | Kevin | Three-way language exchange visibility |
+| D20 | Alice | Base-language match with seed data (Grace) |
+| D21 | Alice | Country flag and age display |
 
 ### Group E: Dashboard — i18n & Errors
-Portuguese/Chinese locale, network error handling.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| D9 | Alice | Portuguese locale |
+| D10 | Alice | Chinese locale |
+| D11 | Alice | Network error handling |
 
 ### Group F: Connection — Happy Paths
-Connect button, send request, incoming/outgoing tabs, request detail, pre-accept messaging, accept, navigation link, pagination.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| H1 | Alice | Connect button on Match Card |
+| H2 | Alice | Send connection request from Dashboard |
+| H5 | Bob | Connections page — incoming tab (default) |
+| H6 | Alice | Connections page — outgoing tab |
+| H9 | Bob | Request detail — view and messaging |
+| H10 | Alice/Bob | Pre-accept messaging — send and receive |
+| H12 | Bob | Accept request |
+| H15 | Alice | Navigation — Connections link |
+| H21 | Bob | Connection requests pagination |
 
 ### Group G: Connection — State Changes
-Already-sent badge, received badge, empty states, message limit, decline/cancel confirmations, stale state.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| H3 | Alice | Already-sent badge |
+| H4 | Bob | Received badge |
+| H7 | Fresh | Empty state (incoming) |
+| H8 | Fresh | Empty state (outgoing) |
+| H11 | Alice | Message limit reached |
+| H13 | Bob | Decline request — confirmation dialog |
+| H14 | Alice | Cancel request — confirmation dialog |
+| H20 | Bob | Stale state (not pending) |
 
 ### Group H: Connection — Errors & i18n
-Chinese/Portuguese locale, duplicate request, already matched errors.
+
+| Test | Login As | Description |
+|------|----------|-------------|
+| H16 | Alice | Chinese locale |
+| H17 | Alice | Portuguese locale |
+| H18 | Alice | Duplicate request error |
+| H19 | Alice | Already matched error |
 
 ## Current Status
 
