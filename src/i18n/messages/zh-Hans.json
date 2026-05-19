@@ -3,7 +3,8 @@
     "brand": "Amiglot",
     "language": "语言",
     "discover": "发现",
-    "connections": "连接"
+    "connections": "连接",
+    "messages": "消息"
   },
   "home": {
     "title": "Amiglot",
@@ -233,5 +234,27 @@
       "declined": "请求已拒绝。",
       "canceled": "请求已取消。"
     }
+  },
+  "messaging": {
+    "title": "消息",
+    "signIn": "登录以查看消息",
+    "loading": "加载中...",
+    "loadMore": "加载更多",
+    "loadOlder": "加载更早的消息",
+    "empty": "还没有对话。去发现语伴开始聊天吧！",
+    "discoverPartners": "发现语伴",
+    "noMessagesYet": "还没有消息，打个招呼吧！",
+    "you": "你",
+    "typePlaceholder": "输入消息...",
+    "send": "发送",
+    "backToConversations": "返回",
+    "closeConversation": "关闭对话",
+    "closeConfirm": "确定要关闭此对话吗？此操作不可撤销。",
+    "conversationClosed": "此对话已关闭。",
+    "dailyLimitReached": "此对话的每日消息上限已达到。",
+    "retry": "重试",
+    "sendFailed": "发送失败",
+    "today": "今天",
+    "yesterday": "昨天"
   }
 }

@@ -3,7 +3,8 @@
     "brand": "Amiglot",
     "language": "Idioma",
     "discover": "Descobrir",
-    "connections": "Conexões"
+    "connections": "Conexões",
+    "messages": "Mensagens"
   },
   "home": {
     "title": "Amiglot",
@@ -233,5 +234,27 @@
       "declined": "Solicitação recusada.",
       "canceled": "Solicitação cancelada."
     }
+  },
+  "messaging": {
+    "title": "Mensagens",
+    "signIn": "Entre para ver mensagens",
+    "loading": "Carregando...",
+    "loadMore": "Carregar mais",
+    "loadOlder": "Carregar mensagens anteriores",
+    "empty": "Nenhuma conversa ainda. Conecte-se com alguém para começar!",
+    "discoverPartners": "Descobrir parceiros de idioma",
+    "noMessagesYet": "Nenhuma mensagem ainda. Diga oi!",
+    "you": "Você",
+    "typePlaceholder": "Digite uma mensagem...",
+    "send": "Enviar",
+    "backToConversations": "Voltar",
+    "closeConversation": "Fechar conversa",
+    "closeConfirm": "Tem certeza que deseja fechar esta conversa? Isso não pode ser desfeito.",
+    "conversationClosed": "Esta conversa foi encerrada.",
+    "dailyLimitReached": "Limite diário de mensagens atingido para esta conversa.",
+    "retry": "Tentar novamente",
+    "sendFailed": "Falha ao enviar",
+    "today": "Hoje",
+    "yesterday": "Ontem"
   }
 }

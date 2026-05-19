@@ -69,11 +69,11 @@ export default function RequestDetail({
   const handleAccept = async () => {
     setActionLoading(true);
     try {
-      await postJson<AcceptResponse>(
+      const result = await postJson<AcceptResponse>(
         `/match-requests/${requestId}/accept`,
         {},
       );
-      router.push("/connections");
+      router.push(`/conversations/${result.match_id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
