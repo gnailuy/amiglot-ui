@@ -74,7 +74,7 @@ type PageProps = {
 
 export default async function ChatPage({ params }: PageProps) {
   const { matchId } = await params;
-  const { data, error, errorStatus, fetched } = await getInitialMessages(matchId);
+  const { data, error, errorStatus } = await getInitialMessages(matchId);
   return (
     <ChatContent
       matchId={matchId}
