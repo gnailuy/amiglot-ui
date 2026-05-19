@@ -337,6 +337,153 @@ async function testConnections(browser) {
   }
 }
 
+async function testMessaging(browser) {
+  console.log('\n── Messaging ──');
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    // Setup: create two users, make a connection, accept it
+    const emailA = `test+e2emsg${Date.now()}a@example.com`;
+    const emailB = `test+e2emsg${Date.now()}b@example.com`;
+
+    // Register user A
+    const { uid: uidA } = await registerViaApi(emailA);
+    // Setup profile for A
+    await fetch(`${API_URL}/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidA },
+      body: JSON.stringify({ handle: `msga${Date.now()}`, timezone: 'Etc/UTC' }),
+    });
+    await fetch(`${API_URL}/profile/languages`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidA },
+      body: JSON.stringify({ languages: [
+        { language_code: 'en', level: 5, is_native: true, is_target: false },
+        { language_code: 'zh', level: 2, is_native: false, is_target: true },
+      ] }),
+    });
+    await fetch(`${API_URL}/profile/availability`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidA },
+      body: JSON.stringify({ availability: [
+        { weekday: 1, start_local_time: '08:00', end_local_time: '20:00', timezone: 'Etc/UTC' },
+      ] }),
+    });
+
+    // Register user B
+    const { uid: uidB } = await registerViaApi(emailB);
+    await fetch(`${API_URL}/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidB },
+      body: JSON.stringify({ handle: `msgb${Date.now()}`, timezone: 'Etc/UTC' }),
+    });
+    await fetch(`${API_URL}/profile/languages`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidB },
+      body: JSON.stringify({ languages: [
+        { language_code: 'zh', level: 5, is_native: true, is_target: false },
+        { language_code: 'en', level: 2, is_native: false, is_target: true },
+      ] }),
+    });
+    await fetch(`${API_URL}/profile/availability`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidB },
+      body: JSON.stringify({ availability: [
+        { weekday: 1, start_local_time: '08:00', end_local_time: '20:00', timezone: 'Etc/UTC' },
+      ] }),
+    });
+
+    // Create match request from A to B
+    const reqResp = await fetch(`${API_URL}/match-requests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidA },
+      body: JSON.stringify({ recipient_id: uidB, initial_message: 'Hey!' }),
+    });
+    const reqData = await reqResp.json();
+    const requestId = reqData.id;
+
+    // Accept as user B
+    const acceptResp = await fetch(`${API_URL}/match-requests/${requestId}/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': uidB },
+      body: JSON.stringify({}),
+    });
+    const acceptData = await acceptResp.json();
+    const matchId = acceptData.match_id;
+
+    // Login user A in browser
+    await loginInBrowser(page, emailA);
+
+    // UI1: Navigate to /conversations
+    await page.goto(`${BASE_URL}/conversations`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2000);
+    const convItems = await page.locator('a[href*="/conversations/"]').count();
+    if (convItems >= 1) {
+      ok('UI-M1: conversations hub shows the match');
+    } else {
+      fail('UI-M1', `expected >=1 conversation link, got ${convItems}`);
+    }
+    await screenshot(page, 'messaging-hub');
+
+    // UI2: Navigate to the chat
+    await page.goto(`${BASE_URL}/conversations/${matchId}`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2000);
+    const msgBubbles = await page.locator('[class*="rounded-2xl"]').count();
+    if (msgBubbles >= 1) {
+      ok('UI-M2: chat shows pre-accept message');
+    } else {
+      fail('UI-M2', `expected >=1 message bubble, got ${msgBubbles}`);
+    }
+    await screenshot(page, 'messaging-chat-initial');
+
+    // UI3: Send a message
+    const textarea = page.locator('textarea');
+    await textarea.fill('Hello from E2E test!');
+    await page.locator('button:has-text("Send")').click();
+    await page.waitForTimeout(2000);
+    const sentMsg = await page.locator('text=Hello from E2E test!').count();
+    if (sentMsg >= 1) {
+      ok('UI-M3: sent message appears in chat');
+    } else {
+      fail('UI-M3', 'sent message not visible');
+    }
+    await screenshot(page, 'messaging-chat-sent');
+
+    // UI4: Character count appears near limit
+    const longText = 'x'.repeat(1850);
+    await textarea.fill(longText);
+    await page.waitForTimeout(500);
+    const charIndicator = await page.locator('text=/\\d+\\/2000/').count();
+    if (charIndicator >= 1) {
+      ok('UI-M4: character count visible near limit');
+    } else {
+      fail('UI-M4', 'character count not visible');
+    }
+    await screenshot(page, 'messaging-char-count');
+
+    // Clear the textarea for next test
+    await textarea.fill('');
+
+    // UI5: Close conversation
+    // We'll test the close button exists
+    const closeBtn = page.locator('button:has-text("Close conversation")');
+    const closeBtnCount = await closeBtn.count();
+    if (closeBtnCount >= 1) {
+      ok('UI-M5: close conversation button present');
+    } else {
+      fail('UI-M5', 'close button not found');
+    }
+    await screenshot(page, 'messaging-close-button');
+
+  } catch (e) {
+    fail('Messaging tests', e.message);
+    await screenshot(page, 'messaging-error');
+  } finally {
+    await context.close();
+  }
+}
+
 async function main() {
   console.log(`Amiglot UI E2E Tests — ${BASE_URL}`);
   console.log(`Screenshots: ${SCREENSHOT_DIR}\n`);
@@ -348,6 +495,7 @@ async function main() {
     await testProfile(browser);
     await testDashboard(browser);
     await testConnections(browser);
+    await testMessaging(browser);
   } finally {
     await browser.close();
   }
