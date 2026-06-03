@@ -3,7 +3,7 @@ domain: Designs
 status: Active
 entry_points:
   - src/app/connections/page.tsx
-  - src/app/[locale]/dashboard/components/match-card.tsx
+  - src/app/dashboard/components/match-card.tsx
 dependencies:
   - .aidoc/designs/discovery-dashboard.md
   - .aidoc/designs/technical-specification.md

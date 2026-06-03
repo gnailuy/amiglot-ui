@@ -2,8 +2,8 @@
 domain: Designs
 status: Active
 entry_points:
-  - src/app/[locale]/dashboard/page.tsx
-  - src/app/[locale]/dashboard/dashboard-content.tsx
+  - src/app/dashboard/page.tsx
+  - src/app/dashboard/dashboard-content.tsx
 dependencies:
   - .aidoc/architecture/guidelines.md
   - .aidoc/designs/technical-specification.md
